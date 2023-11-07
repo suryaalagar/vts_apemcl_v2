@@ -1,0 +1,117 @@
+.leaflet-marker-pane{
+   margin-top: -25px !important;
+}
+.vehicledetails {
+   position: fixed;
+   left: 0;
+   bottom: 0;
+   width: 100%;
+   background-color: #FFFFFF;
+   color: #000000;
+   text-align: center;
+}
+a.aprove
+{
+	color:white;
+}
+a.pay
+{
+	color:white;
+}
+a.dashview
+{
+	color:white;
+}
+.error
+{
+   color: red;
+   font-weight:bold;
+
+}
+#status_details
+{
+   /*border:2px solid green;*/
+   padding: 30px;
+  box-shadow:
+       inset 0 -3em 3em rgba(0,0,0,0.1),
+             0 0  0 2px rgb(255,255,255),
+             0.3em 0.3em 1em rgba(0,0,0,0.3);
+   font-weight: bolder;
+
+}
+#waitmsg
+{
+   color:#80001e;
+   margin-left: 300px;
+   font-size:25px;
+}
+#dashboard_toggle
+{
+background:#aecfd0;
+}
+#dashboard_toggle1
+{
+background:#99c6af;
+}
+#dealers_toggle
+{
+background:#e9a692;
+}
+#addButton,#removeButton,#removeButton1,#addButton1
+{
+   margin-top :25px;
+}
+/* .nav_hover
+{
+   padding-right:5px;
+} */
+.nav_hover:hover
+{
+   background: salmon;
+   border-radius: 10px;
+
+ 
+}
+.nav_hover:hover .mb_span
+{
+   color: white; 
+
+ 
+}
+
+.left_ul
+{
+   
+ background: antiquewhite;
+ font-size: 13px;
+  
+}
+
+/* @media only screen and (device-width: 768px) {
+
+   .left_ul
+   {
+   font-size: 7px;
+
+   }
+}
+   /* default iPad screens */
+@media only screen and (min-width: 768px) and (max-width: 1140px)  {
+   .left_ul
+   {
+   font-size:8px;
+   }
+   /* default iPad screens */
+}
+@media only screen and (device-width: 576px) {
+
+   .left_ul
+   {
+   font-size: 7px;
+
+   }
+   /* default iPad screens */
+}
+
+
+
