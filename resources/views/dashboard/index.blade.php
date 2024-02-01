@@ -6,17 +6,52 @@
                 height: 100%;
             }
 
+            .legend {
+                padding: 6px 8px;
+                font: 14px Arial, Helvetica, sans-serif;
+                background: white;
+                background: rgba(255, 255, 255, 0.8);
+                /*box-shadow: 0 0 15px rgba(0, 0, 0, 0.2);*/
+                border-radius: 10px;
+                line-height: 24px;
+                color: #555;
+            }
+
+            .legend h4 {
+                text-align: center;
+                font-size: 16px;
+                margin: 2px 12px 8px;
+                color: #777;
+            }
+
+            .legend span {
+                position: relative;
+                bottom: 3px;
+            }
+
+            .legend i {
+                width: 18px;
+                height: 18px;
+                float: left;
+                margin: 0 8px 0 0;
+                opacity: 0.7;
+            }
+
+            .legend i.icon {
+                background-size: 18px;
+                background-color: rgba(255, 255, 255, 1);
+            }
         </style>
     @endpush
     <!--stats-->
     <div class="row">
         <div class="col-xl-3 col-lg-6 col-12">
-            <div class="card">
+            <div class="card" style="border-radius: 10px;">
                 <div class="card-content">
                     <div class="card-body">
                         <div class="media">
                             <div class="media-body text-left w-100">
-                                <h3 class="primary">100</h3>
+                                <h3 class="primary">{{ $planned_trips }}</h3>
                                 <span>Planned Trips</span>
                             </div>
                             <div class="media-right media-middle">
@@ -32,12 +67,12 @@
             </div>
         </div>
         <div class="col-xl-3 col-lg-6 col-12">
-            <div class="card">
+            <div class="card" style="border-radius: 10px;">
                 <div class="card-content">
                     <div class="card-body">
                         <div class="media">
                             <div class="media-body text-left w-100">
-                                <h3 class="warning">35</h3>
+                                <h3 class="warning">{{ $process_trips }}</h3>
                                 <span>Trip In Processing</span>
                             </div>
                             <div class="media-right media-middle">
@@ -53,12 +88,12 @@
             </div>
         </div>
         <div class="col-xl-3 col-lg-6 col-12">
-            <div class="card">
+            <div class="card" style="border-radius: 10px;">
                 <div class="card-content">
                     <div class="card-body">
                         <div class="media">
                             <div class="media-body text-left w-100">
-                                <h3 class="success">50</h3>
+                                <h3 class="success">{{ $completed_trips }}</h3>
                                 <span>Trip Completed</span>
                             </div>
                             <div class="media-right media-middle">
@@ -74,12 +109,12 @@
             </div>
         </div>
         <div class="col-xl-3 col-lg-6 col-12">
-            <div class="card">
+            <div class="card" style="border-radius: 10px;">
                 <div class="card-content">
                     <div class="card-body">
                         <div class="media">
                             <div class="media-body text-left w-100">
-                                <h3 class="danger">15</h3>
+                                <h3 class="danger">0</h3>
                                 <span>Trip Over Due</span>
                             </div>
                             <div class="media-right media-middle">
@@ -97,7 +132,7 @@
     </div>
     <div class="row match-height">
         <div class="col-12">
-            <div class="card">
+            <div class="card" style="border-radius: 10px;">
                 <div class="card-content">
                     <div class="card-body">
                         <div class="map" id="map">
@@ -113,11 +148,10 @@
     {{-- <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.4.0/Chart.min.js"></script> --}}
 @endsection
 @push('scripts')
-
     <script type="text/javascript">
         // var marker;
         var markers = [];
-        var map = L.map('map').setView([10.84125, 79.84266000000001], 6);
+        var map = L.map('map').setView([17.386533, 81.570239], 8);
         // create a new tile layer
         // var tileUrl = 'http://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
         //     layer = new L.TileLayer(tileUrl, {
@@ -128,6 +162,21 @@
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
             maxZoom: 20
         }).addTo(map);
+
+        var legend = L.control({
+            position: "bottomleft"
+        });
+        legend.onAdd = function(map) {
+            var div = L.DomUtil.create("div", "legend");
+            div.innerHTML += "<h4>Vehicle Status</h4>";
+            div.innerHTML += '<i style="background:green"></i><span>Moving</span><br>';
+            div.innerHTML += '<i style="background:blue"></i><span>Parking</span><br>';
+            div.innerHTML += '<i style="background:yellow"></i><span>Idle</span><br>';
+            div.innerHTML += '<i style="background:grey"></i><span>No Network</span><br>';
+            return div;
+        };
+
+        legend.addTo(map);
 
         // L.control.zoom({
         //     position: 'topright'

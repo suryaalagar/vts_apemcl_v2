@@ -6,6 +6,8 @@ use App\Models\RoutedeviationReport;
 use App\Models\DemoPolyline;
 use App\Http\Requests\StoreRoutedeviationReportRequest;
 use App\Http\Requests\UpdateRoutedeviationReportRequest;
+use App\Models\PlayBackHistoryReport;
+use App\Models\Routes;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Carbon\Carbon;
@@ -27,7 +29,8 @@ class RoutedeviationReportController extends Controller
         // $routedeviation_data = RoutedeviationReport::get();
         // $polyline_data = DemoPolyline::first();
         // return view('report.routedeviation_report',compact('routedeviation_data','polyline_data'));
-        $from_date = date('Y-m-d H:i:s', strtotime('00:00:00'));
+        // $from_date = date('Y-m-d H:i:s', strtotime('00:00:00'));
+        $from_date = "2023-01-01 00:00:00";
         $to_date = date('Y-m-d H:i:s', strtotime('23:59:59'));
         return view('report.routedeviation_report', compact('from_date', 'to_date'));
     }
@@ -46,36 +49,41 @@ class RoutedeviationReportController extends Controller
 
         $totalDataRecord = RoutedeviationReport::count();
 
-        $totalFilteredRecord = $totalDataRecord;
+        $totalFilteredRecord = RoutedeviationReport::whereBetween('created_at', [$fromdate, $todate])
+            ->select('id')
+            ->where('location_status',2)
+            ->count();
 
         $limit_val = $request->input('length');
         $start_val = $request->input('start');
         $order_val = $columns_list[$request->input('order.0.column')];
-        $dir_val = $request->input('order.0.dir');
+        // 'desc' = $request->input('order.0.dir');
 
         $start = $request->input('start') + 1;
 
         if (empty($request->input('search.value'))) {
-            $post_data = DB::table('routedeviation_reports')
-                ->whereBetween('created_at', [$fromdate, $todate])
+            $post_data = RoutedeviationReport::whereBetween('created_at', [$fromdate, $todate])
+                ->where('location_status', 2)
                 ->offset($start_val)
                 ->limit($limit_val)
-                ->orderBy($order_val, $dir_val)
-                ->select('id', 'route_name', 'vehicle_imei', 'vehicle_name', 'route_deviate_outtime', 'route_deviate_intime', 'route_out_location', 'route_in_location', 'route_out_lat', 'route_out_lng', 'route_in_lat', 'route_in_lng', DB::raw('TIMEDIFF(route_deviate_intime, route_deviate_outtime) AS time_difference'))
+                ->orderBy($order_val, 'desc')
+                ->select('id', 'route_name', 'vehicle_imei', 'vehicle_name', 'route_deviate_outtime', 'route_deviate_intime', 'route_out_location', 'route_in_location', 'route_out_lat', 'route_out_lng', 'route_in_lat', 'route_in_lng', DB::raw('SEC_TO_TIME(TIME_TO_SEC(TIMEDIFF(route_deviate_intime, route_deviate_outtime))) AS time_difference'))
                 ->get();
         } else {
 
             $search_text = $request->input('search.value');
             $post_data =  RoutedeviationReport::where('id', 'LIKE', "%{$search_text}%")
+                ->where('location_status', 2)
                 ->orWhere('vehicle_imei', 'LIKE', "%{$search_text}%")
                 ->orWhere('vehicle_name', 'LIKE', "%{$search_text}%")
                 ->orWhere('route_name', 'LIKE', "%{$search_text}%")
                 ->offset($start_val)
                 ->limit($limit_val)
-                ->orderBy($order_val, $dir_val)
+                ->orderBy($order_val, 'desc')
                 ->get();
 
             $totalFilteredRecord = RoutedeviationReport::where('id', 'LIKE', "%{$search_text}%")
+                ->where('location_status', 2)
                 ->orWhere('vehicle_imei', 'LIKE', "%{$search_text}%")
                 ->orWhere('vehicle_name', 'LIKE', "%{$search_text}%")
                 ->orWhere('route_name', 'LIKE', "%{$search_text}%")
@@ -87,20 +95,9 @@ class RoutedeviationReportController extends Controller
             foreach ($post_data  as $index =>  $data) {
 
                 $serialNumber = $start + $index;
-                // $route_out_address = "Loading...";
-                // $route_in_address = "Loading...";
-                // if ($address == 1) {
-                //     $route_out_address = $this->get_address($data->route_out_lat, $data->route_out_lng);
-                //     $route_in_address = $this->get_address($data->route_in_lat, $data->route_in_lng);
-                // }
-                //     $edit = '<button type="button" class="btn btn-success showModal"
-                //     data-toggle="modal" data-target="#myModal"
-                //     data-lat="' . $data->start_latitude . '" data-lng="' . $data->start_longitude . '">
-                //     Map View
-                // </button>';
                 $start_time = Carbon::parse($data->route_deviate_outtime)->timestamp;
                 $end_time = Carbon::parse($data->route_deviate_intime)->timestamp;
-                $time_difference = Carbon::parse($data->time_difference)->format('H:i:s');
+                $time_difference = substr($data->time_difference, 0, 8);
                 $route_name = $data->route_name;
                 $route_id = $data->id;
                 $edit = '<button type="button" class="btn btn-success showModal"  onclick="route_deviation_data(' . "$start_time" . "," . "$end_time" . "," . "'$route_name'" . "," . "'$route_id'" . ');" >Map View</button>';
@@ -118,6 +115,7 @@ class RoutedeviationReportController extends Controller
                     'Action' => $edit
                 );
             }
+
             if (!empty($array_data)) {
                 $draw_val = $request->input('draw');
                 $get_json_data = array(
@@ -136,7 +134,6 @@ class RoutedeviationReportController extends Controller
      */
     public function create()
     {
-        //
     }
 
     /**
@@ -189,17 +186,15 @@ class RoutedeviationReportController extends Controller
         $formattedDateTime = $dateTime->format('Y-m-d H:i:s');
         $formattedDateTime1 = $dateTime1->format('Y-m-d H:i:s');
         $route_id =  $request->route_id;
-        $get_latlng = DB::table('routedeviation_reports')   
-            ->select('route_out_lat', 'route_out_lng', 'route_in_lat', 'route_in_lng')
+        $get_latlng = RoutedeviationReport::select('route_out_lat', 'route_out_lng', 'route_in_lat', 'route_in_lng', 'vehicle_imei')
             ->where('id', '=', "$route_id")->first();
         $route_out_address = $this->get_address($get_latlng->route_out_lat, $get_latlng->route_out_lng);
         $route_in_address = $this->get_address($get_latlng->route_in_lat, $get_latlng->route_in_lng);
         $query['location'] = array('route_out_address' => $route_out_address, 'route_in_address' => $route_in_address);
-        $query['playback'] = DB::table('play_back_histories')
-            ->select('latitude', 'longitude')
+        $query['playback'] = PlayBackHistoryReport::select('latitude', 'longitude')
+            ->where('device_imei', '=', $get_latlng->vehicle_imei)
             ->whereBetween('device_datetime', [$formattedDateTime, $formattedDateTime1])->get();
-        $query['route_polyline'] = DB::table('routes')
-            ->select('route_polyline AS polyline', 'routename AS route_name')
+        $query['route_polyline'] = Routes::select('route_polyline AS polyline', 'routename AS route_name')
             ->where('routename', '=', "$route_name")->get();
         return $query;
     }

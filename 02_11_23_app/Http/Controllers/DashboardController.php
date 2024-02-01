@@ -10,7 +10,6 @@ use Illuminate\Support\Facades\Auth;
 class DashboardController extends Controller
 {
 
-
     /**
      * Display a listing of the resource.
      */
@@ -18,6 +17,7 @@ class DashboardController extends Controller
     {
         return view('dashboard.index');
     }
+
 
     public function get_apemcl_data(Request $request)
     {

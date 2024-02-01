@@ -101,7 +101,7 @@
                                             Add Trip
                                         </button></a>
                                 </div>
-                                <ul class="nav nav-tabs nav-underline" role="tablist">
+                                <ul class="nav nav-tabs nav-underline" role="tablist" id="myTab">
                                     <li class="nav-item">
                                         <a class="nav-link active" data-value="1" id="baseIcon-tab21" data-toggle="tab"
                                             aria-controls="tabIcon21" href="#tabIcon21" role="tab" aria-selected="true"
@@ -266,7 +266,7 @@
                     <div class="modal-body modal_offset">
                         <div class="row">
                             <div class="col-md-12 modal_body_content">
-                                <p>Location : Karnataka</p>
+                                {{-- <p>Location : Karnataka</p> --}}
                             </div>
                         </div>
                         <div class="row">
@@ -293,9 +293,18 @@
 @push('scripts')
     <script type="text/javascript">
         $(document).ready(function() {
-            $(".nav-link").on('click', function() {
-                // alert("SUCCESS");
+            // $(".nav-link").on('shown.bs.tab', function() {
+            //     // alert("SUCCESS");
+load_data(status='All');
+
+            // });
+            $('#myTab').on('click', '.nav-link', function() {
                 var status = $(this).text();
+                load_data(status);
+            });
+
+            function load_data(status) {
+
 
                 var fromdate = $('#selectdate1').val();
                 var todate = $('#selectdate2').val();
@@ -474,6 +483,11 @@
                     ];
                 }
 
+                var existingDataTable = $(datatable_id).DataTable();
+                if (existingDataTable) {
+                    existingDataTable.destroy();
+                }
+
                 $.fn.dataTable.ext.errMode = 'throw';
                 $(datatable_id).DataTable({
 
@@ -497,7 +511,7 @@
                 });
 
 
-            });
+            }
 
 
         });
@@ -507,18 +521,7 @@
         var marker;
         var markers = [];
         var map = L.map('map').setView([10.84125, 79.84266000000001], 6);
-        // create a new tile layer
-        // var tileUrl = 'http://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
-        //     layer = new L.TileLayer(tileUrl, {
-        //         attribution: 'Maps © <a href=\"www.openstreetmap.org/copyright\">OpenStreetMap</a> contributors',
-        //         maxZoom: 15,
-        //         noWrap: true,
-        //     });
-        // L.control.zoom({
-        //     position: 'topright'
-        // }).addTo(map);
-        // add the layer to the map
-        // Google Layer
+
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
             maxZoom: 20
         }).addTo(map);
@@ -576,9 +579,7 @@
         });
         // Function to close the modal
         function closeModal() {
-            // Close your modal logic here
 
-            // Clear the map intervals when the modal is closed
             clearMapIntervals();
         }
 
@@ -681,10 +682,5 @@
                 }
             });
         }
-
-        // function clearcontent() {
-        //     start_fence.removeFrom(map);
-        //     end_fence.removeFrom(map);
-        // }
     </script>
 @endpush

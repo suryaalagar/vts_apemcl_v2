@@ -104,15 +104,16 @@ class VehicleController extends Controller
     {
 
         $validator = Validator::make($request->all(), [
+            'vehicle_name' => 'required|string|not_regex:/</',
             'sim_mob_no' => 'required|unique:vehicles,sim_mob_no|integer',
             'device_imei' => 'required|unique:vehicles,device_imei|integer'
         ]);
 
 
         if ($validator->fails()) {
-
             return response([
-                'message' => "validaton_error"
+                "success" => "validation",
+                "message" => $validator->errors()
             ]);
         }
 
@@ -136,10 +137,16 @@ class VehicleController extends Controller
             ]);
             DB::commit();
 
-            return response(['message' => "Success"]);
+            return response([
+                "success" => "Success",
+                "message" => $validator->errors()
+            ]);
         } catch (\Exception $e) {
             DB::rollback();
-            return response(['message' => "Failure"]);
+            return response([
+                "success" => "Failure",
+                "message" => $validator->errors()
+            ]);
         }
     }
 

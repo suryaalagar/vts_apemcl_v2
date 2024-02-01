@@ -5,6 +5,12 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use App\Models\TripplanReport;
 use Illuminate\Support\Facades\DB;
+use App\Models\Vehicle;
+use App\Models\Routes;
+use App\Models\Generator;
+use App\Models\ParkingReport;
+use App\Models\PlayBackHistoryReport;
+use App\Models\Receiver;
 use Carbon\Carbon;
 
 class TripplanReportController extends Controller
@@ -13,14 +19,16 @@ class TripplanReportController extends Controller
     public function index(Request $request)
     {
         $trip_plans = TripplanReport::get();
-        $from_date = date('Y-m-d H:i:s', strtotime('00:00:00'));
+        // $from_date = date('Y-m-d H:i:s', strtotime('00:00:00'));
+        $from_date = "2023-12-01 00:00:00";
         $to_date = date('Y-m-d H:i:s', strtotime('23:59:59'));
         return view('trip_plan.trip_plan', compact('trip_plans', 'from_date', 'to_date'));
     }
 
     public function tripplan_complete_report()
     {
-        $from_date = date('Y-m-d H:i:s', strtotime('00:00:00'));
+        // $from_date = date('Y-m-d H:i:s', strtotime('00:00:00'));
+        $from_date = "2023-11-01 00:00:00";
         $to_date = date('Y-m-d H:i:s', strtotime('23:59:59'));
         return view('report.trip_plan', compact('from_date', 'to_date'));
     }
@@ -81,7 +89,7 @@ class TripplanReportController extends Controller
         $limit_val = $request->input('length');
         $start_val = $request->input('start');
         $order_val = $columns_list[$request->input('order.0.column')];
-        $dir_val = $request->input('order.0.dir');
+        // 'desc' = $request->input('order.0.dir');
 
         $start = $request->input('start') + 1;
 
@@ -105,7 +113,7 @@ class TripplanReportController extends Controller
                         DB::raw('end_odometer - start_odometer as total_km'),
                         DB::raw('TIMEDIFF(updated_at, created_at) AS time_difference')
                     )
-                    ->orderBy($order_val, $dir_val)
+                    ->orderBy($order_val, 'desc')
                     ->get();
             } else {
                 $post_data = TripplanReport::whereBetween('trip_date', [$fromdate, $todate])
@@ -126,7 +134,7 @@ class TripplanReportController extends Controller
                     )
                     ->offset($start_val)
                     ->limit($limit_val)
-                    ->orderBy($order_val, $dir_val)
+                    ->orderBy($order_val, 'desc')
                     ->get();
             }
         } else {
@@ -140,7 +148,7 @@ class TripplanReportController extends Controller
                 ->orWhere('device_imei', 'LIKE', "%{$search_text}%")
                 ->offset($start_val)
                 ->limit($limit_val)
-                ->orderBy($order_val, $dir_val)
+                ->orderBy($order_val, 'desc')
                 ->get();
 
             $totalFilteredRecord = TripplanReport::whereBetween('trip_date', [$fromdate, $todate])
@@ -151,7 +159,7 @@ class TripplanReportController extends Controller
                 ->orWhere('device_imei', 'LIKE', "%{$search_text}%")
                 ->offset($start_val)
                 ->limit($limit_val)
-                ->orderBy($order_val, $dir_val)
+                ->orderBy($order_val, 'desc')
                 ->count();
         }
 
@@ -201,6 +209,15 @@ class TripplanReportController extends Controller
             );
 
             echo json_encode($get_json_data);
+        } else {
+            $draw_val = $request->input('draw');
+            $get_json_data = array(
+                "draw"            => "intval($draw_val)",
+                "recordsTotal"    => 0,
+                "recordsFiltered" => 0,
+                "data"            => ""
+            );
+            echo json_encode($get_json_data);
         }
     }
 
@@ -239,7 +256,7 @@ class TripplanReportController extends Controller
         $limit_val = $request->input('length');
         $start_val = $request->input('start');
         $order_val = $columns_list[$request->input('order.0.column')];
-        $dir_val = $request->input('order.0.dir');
+        // 'desc' = $request->input('order.0.dir');
         $start = $request->input('start') + 1;
 
         if (empty($request->input('search.value'))) {
@@ -262,7 +279,7 @@ class TripplanReportController extends Controller
                     DB::raw('end_odometer - start_odometer as total_km'),
                     DB::raw('TIMEDIFF(updated_at, created_at) AS time_difference')
                 )
-                ->orderBy($order_val, $dir_val)
+                ->orderBy($order_val, 'desc')
                 ->get();
         } else {
             $search_text = $request->input('search.value');
@@ -276,7 +293,7 @@ class TripplanReportController extends Controller
                 ->whereBetween('trip_date', [$fromdate, $todate])
                 ->offset($start_val)
                 ->limit($limit_val)
-                ->orderBy($order_val, $dir_val)
+                ->orderBy($order_val, 'desc')
                 ->get();
 
             $totalFilteredRecord = TripplanReport::where('trip_id', 'LIKE', "%{$search_text}%")
@@ -332,165 +349,16 @@ class TripplanReportController extends Controller
             );
 
             echo json_encode($get_json_data);
-        }
-    }
+        } else {
+            $draw_val = $request->input('draw');
+            $get_json_data = array(
+                "draw"            => "intval($draw_val)",
+                "recordsTotal"    => 0,
+                "recordsFiltered" => 0,
+                "data"            => ""
+            );
 
-    public function zigma_trip_plan()
-    {
-
-        $this->db->select('z.*,v.vehiclename,v.lat,v.lng,v.odometer,v.client_id,v.latlon_address,v.deviceimei,v.vehicleid');
-        $this->db->from('zigma_plantrip as z');
-        $this->db->join('vehicletbl as v', 'z.vehicleid = v.vehicleid', 'inner join');
-        $where = '(z.status=1 OR z.status=2)';
-        $this->db->where($where);
-        $query = $this->db->get();
-        $vehicle =  $query->result();
-        foreach ($vehicle as $v_list) {
-            if ($v_list->status == 1) {
-                $start_geoid = $v_list->start_location;
-                $get_geodata =  $this->cron_test_model->get_geodata($start_geoid);
-
-                $latitude1 = $get_geodata->g_lat;
-                $longitude1 = $get_geodata->g_lng;
-                $latitude2 = $v_list->lat;
-                $longitude2 = $v_list->lng;
-                $radius = $get_geodata->radius;
-                $distance = $this->geo_distance($latitude1, $longitude1, $latitude2, $longitude2);
-
-                if ($distance < $radius) {
-
-                    $data1 = array('geo_status' => 1);
-                    $this->db->where('trip_id', $v_list->trip_id);
-                    $this->db->where('client_id', $v_list->client_id);
-                    $this->db->where('vehicleid', $v_list->vehicleid);
-                    // $this->db->where('poc_number',$v_list->poc_number);
-                    $this->db->update('zigma_plantrip', $data1);
-                } elseif (($distance > $radius) && ($v_list->geo_status == 1)) {
-
-                    $data = array(
-                        'trip_id' => $v_list->trip_id,
-                        'trip_date' => $v_list->created_date,
-                        'client_id' => $v_list->client_id,
-                        'vehicle_id' => $v_list->vehicleid,
-                        'poc_number' => $v_list->poc_number,
-                        'deviceimei' => $v_list->deviceimei,
-                        'vehicle_name' => $v_list->vehiclename,
-                        'start_geo_id' => $v_list->start_location,
-                        'start_location' => $v_list->latlon_address,
-                        'end_geo_id' => $v_list->end_location,
-                        'start_odometer' => $v_list->odometer,
-                        's_lat' => $v_list->lat,
-                        's_lng' => $v_list->lng,
-                        'flag' => 2,
-                        'create_datetime' => date('Y-m-d H:i:s'),
-                        'plam_duration' => $v_list->pl_duration,
-                        'plan_km' => $v_list->pl_km,
-                    );
-
-
-                    $this->db->insert('zigma_plantrip_report1', $data);
-
-                    $data1 = array('status' => 2, 'geo_status' => 0,);
-                    $this->db->where('trip_id', $v_list->trip_id);
-                    $this->db->where('vehicleid', $v_list->vehicleid);
-                    $this->db->where('client_id', $v_list->client_id);
-                    $this->db->update('zigma_plantrip', $data1);
-                }
-            } else {
-                $start_geoid = $v_list->start_location;
-                $end_geoid = $v_list->end_location;
-                $get_geodata =  $this->cron_test_model->get_geodata($end_geoid);
-                $latitude1 = $get_geodata->g_lat;
-                $longitude1 = $get_geodata->g_lng;
-                $latitude2 = $v_list->lat;
-                $longitude2 = $v_list->lng;
-                $radius = $get_geodata->radius;
-                $distance = $this->geo_distance($latitude1, $longitude1, $latitude2, $longitude2);
-                echo '<br>' . $distance . '<br>';
-                $delay_status = $v_list->delay_status;
-                $pl_duration = $v_list->pl_duration;
-                $pl_duration = str_replace(':', '.', $pl_duration);
-                $pl_duration  = floatval($pl_duration);
-                $start_odometer_data =  $this->cron_test_model->getstart_odometer($v_list->trip_id, $v_list->client_id, $v_list->vehicleid);
-                $start_datetime = $start_odometer_data->create_datetime;
-                if ($delay_status == 0 and $pl_duration != '') {
-                    $datetime1 = new DateTime();
-                    $datetime2 = new DateTime($start_datetime);
-                    $interval = $datetime1->diff($datetime2);
-                    $diff_hours = $interval->format('%h.%i');
-                    $diff_hours  = floatval($diff_hours);
-                    if ($diff_hours > $pl_duration) {
-                        $sms_data = array(
-                            "lat" => $latitude2,
-                            "lng" => $longitude1,
-                            "createdon" => date('Y-m-d H:i:s'),
-                            "vehicle_id" => $v_list->vehicleid,
-                            "client_id" => $v_list->client_id,
-                            'type_id' => 5,
-                            "all_status" => 59,
-                            "show_status" => 1,
-                            "sms_status" => 1,
-                        );
-                        $this->db->insert('sms_alert', $sms_data);
-                        $data1 = array('delay_status' => 1);
-                        $this->db->where('vehicleid', $v_list->vehicleid);
-                        $this->db->where('trip_id', $v_list->trip_id);
-                        $this->db->where('client_id', $v_list->client_id);
-                        $this->db->update('zigma_plantrip', $data1);
-                    }
-                }
-                if ($distance < $radius) {
-                    $start_odo = $start_odometer_data->start_odometer;
-                    $distance_value = $v_list->odometer - $start_odo;
-                    $distance_value = ($distance_value > 0) ? $distance_value : 0;
-                    $end_datetime = date('Y-m-d H:i:s');
-                    $idle_data = $this->cron_test_model->smart_idleday($v_list->deviceimei, $start_datetime, $end_datetime);
-                    $park_data = $this->cron_test_model->smart_parkday($v_list->deviceimei, $start_datetime, $end_datetime);
-                    $idle_duration = $idle_data->idel_duration;
-                    $hours = floor($idle_duration / 60);
-                    $min = $idle_duration - ($hours * 60);
-                    $min = floor((($min -   floor($min / 60) * 60)) / 6);
-                    $second = $idle_duration % 60;
-                    $idle_hrs = $hours . " Hours " . $min . " Minutes";
-
-                    $park_duration = $park_data->parking_duration;
-                    $hours = floor($park_duration / 60);
-                    $min = $park_duration - ($hours * 60);
-                    $min = floor((($min -   floor($min / 60) * 60)) / 6);
-                    $second = $park_duration % 60;
-                    $park_hrs = $hours . " Hours " . $min . " Minutes";
-
-                    $data = array(
-                        'end_odometer' => $v_list->odometer,
-                        'distance' => $distance_value,
-                        'e_lat' => $v_list->lat,
-                        'e_lng' => $v_list->lng,
-                        'end_location' => $v_list->latlon_address,
-                        'manual_idle_dur' => $idle_hrs,
-                        'parking_duration' => $park_hrs,
-                        'flag' => 3,
-                        'updated_datetime' => date('Y-m-d H:i:s')
-                    );
-
-                    $this->db->where('trip_id', $v_list->trip_id);
-                    $this->db->where('client_id', $v_list->client_id);
-                    $this->db->where('vehicle_id', $v_list->vehicleid);
-                    $this->db->update('zigma_plantrip_report1', $data);
-                    $data1 = array('status' => 3);
-                    $this->db->where('vehicleid', $v_list->vehicleid);
-                    $this->db->where('trip_id', $v_list->trip_id);
-                    $this->db->where('client_id', $v_list->client_id);
-                    $this->db->update('zigma_plantrip', $data1);
-
-                    // Update Route Deviation Is Completed Then Change Default Status
-                    $v_data = array('route_deviate_sms' => 0);
-                    $this->db->where('deviceimei', $v_list->deviceimei);
-                    $this->db->update('vehicletbl', $v_data);
-
-                    $trip_idle_data = $this->cron_test_model->idle_report_list($start_datetime, $end_datetime, $v_list->deviceimei, 60, $start_geoid, $end_geoid);
-                    $this->db->insert_batch('trip_plan_idle_report', $trip_idle_data);
-                }
-            }
+            echo json_encode($get_json_data);
         }
     }
 
@@ -580,6 +448,7 @@ class TripplanReportController extends Controller
 
     public function planned_trips(Request $request)
     {
+        date_default_timezone_set("Asia/Kolkata");
         $current_time = date("Y-m-d H:i:s");
         $trip_id = $request->trip_id;
         // print_r($trip_id);die;
@@ -615,8 +484,7 @@ class TripplanReportController extends Controller
             ->get()->toArray();
         if ($tripplan['tripplan']) {
             $device_imei = $tripplan['tripplan'][0]->device_imei;
-            $tripplan['playback'] = DB::table('play_back_histories')
-                ->select('latitude', 'longitude', 'device_datetime')
+            $tripplan['playback'] = PlayBackHistoryReport::select('latitude', 'longitude', 'device_datetime')
                 ->where('device_imei', $device_imei) // Use 'device_imei' from the first query
                 ->whereBetween('device_datetime', [$formattedDateTime, $formattedDateTime1])
                 ->get();
@@ -628,9 +496,11 @@ class TripplanReportController extends Controller
 
     public function create()
     {
-        $vehicle = DB::table('vehicles')->select('device_imei', 'vehicle_name')->where('status', '=', '1')->get();
-        $routes = DB::table('routes')->select('id', 'routename', 'route_start_lat', 'route_start_lng', 'route_end_lat', 'route_end_lng')->get();
-        return view('trip_plan.add_trip', compact('vehicle', 'routes'));
+        $vehicle = Vehicle::select('device_imei', 'vehicle_name')->where('status', '=', '1')->get();
+        $routes = Routes::select('id', 'routename', 'route_start_lat', 'route_start_lng', 'route_end_lat', 'route_end_lng')->get();
+        $generators = Generator::select('id', 'generator_id', 'generator_name')->get();
+        $receivers = Receiver::select('id', 'receiver_id', 'receiver_name')->get();
+        return view('trip_plan.add_trip', compact('vehicle', 'routes', 'generators', 'receivers'));
     }
 
     public function store(Request $request)
@@ -638,13 +508,11 @@ class TripplanReportController extends Controller
         $device_imei = $request->input('vehicleid');
         $route_id = $request->input('route_id');
 
-        $vehicle = DB::table('vehicles')
-            ->select('id as vehicle_id', 'device_imei', 'vehicle_name')
+        $vehicle = Vehicle::select('id as vehicle_id', 'device_imei', 'vehicle_name')
             ->where('status', '=', '1')
             ->where('device_imei', '=', "$device_imei")
             ->first();
-        $routes = DB::table('routes')
-            ->select('id', 'routename')
+        $routes = Routes::select('id', 'routename', 'route_start_lat', 'route_start_lng', 'route_end_lat', 'route_end_lng')
             ->where('id', '=', "$route_id")
             ->first();
 
@@ -664,8 +532,8 @@ class TripplanReportController extends Controller
             $TripplanReport->trip_date = $request->input('trip_date');
             $TripplanReport->vehicle_name = $vehicle->vehicle_name;
             $TripplanReport->route_name = $routes->routename;
-            // $TripplanReport->created_at = NULL;
-            // $TripplanReport->updated_at = NULL;
+            $TripplanReport->created_at = NULL;
+            $TripplanReport->updated_at = NULL;
             $TripplanReport->status = 1;
 
 
@@ -675,7 +543,7 @@ class TripplanReportController extends Controller
             return response(['message' => "Success"]);
         } catch (\Exception $e) {
             DB::rollback();
-            return response(['message' => "Failure"]);
+            return response(['message' =>  $e->getMessage()]);
         }
     }
 
@@ -689,17 +557,43 @@ class TripplanReportController extends Controller
         $dateTime1 = Carbon::createFromTimestamp($to_date);
         $formattedDateTime = $dateTime->format('Y-m-d H:i:s');
         $formattedDateTime1 = $dateTime1->format('Y-m-d H:i:s');
-        $tripplan = DB::table('parking_reports')
-            ->select(
-                'id',
-                'start_latitude',
-                'start_longitude',
-                DB::raw('TIMEDIFF(end_datetime, start_datetime) AS time_difference')
-            )
+        $tripplan = ParkingReport::select(
+            'id',
+            'start_latitude',
+            'start_longitude',
+            'end_datetime',
+            'start_datetime',
+            DB::raw('TIMEDIFF(end_datetime, start_datetime) AS time_difference')
+        )
             ->where('device_imei', $device_imei)
             ->where('start_datetime', '>=', $formattedDateTime)
             ->where('end_datetime', '<=', $formattedDateTime1)
             ->get();
         return $tripplan;
+    }
+
+    public function add_trip_curl()
+    {
+
+        $findVechicle = "AP31TG7497";
+        $transaction_id = "transaction_6473862";
+        $poly_line = "wuibA}ortMA[EwBIkBIuAG}AUcF??w@RYFoAV??KwBGsAMoAGaAGmACq@CWGmBAeBIgBCmA@mAFmJ??@I`AEn@Cr@?B?|BGLA|@EHAp@G\Cz@GZCRCLAr@EB?RCf@Cx@ETATA`@AdAGd@A~@ENA???eAAiAAMAWAQ?AAQ?CG{@E]AI?C?G?G?Q?_@@_@?W?O?m@?I@K?OB_@?s@?I?A@E@GBEDGBA@CNKh@YVMl@]ZQBCNKrB{AHCHAB?H?H@F@D@@?x@PVDz@Lp@FdBNFAD?FCDE@A@C@A@E?IAuE?yA@aK??AStBEN?`AA|@?j@Aj@?vAA~AC`@ALAnCK`AAzAFnEC??BOBGHYVs@HMTe@f@m@???A?A?A?A?A@??A?A@??A@?IsAGm@Iq@a@sDKq@OsA[sCMeAIw@]eDCU_@cD???wAAAAOSgBK{@Ea@QoA[}B[oCGc@Eg@QwAYwBIu@E_@Ea@E]C]E]E[AMGm@AS?W?wAAmA?mA?o@?CAaAAq@?s@?A?]?I?W?k@Ae@?e@?w@AsC?yA?GAM?K?CAc@CyAC}BAC?G?G?ICaC?a@?M?G?G?Q?A?M?]?e@Ay@@y@?i@A{BCQEKCG??AaA@sA?E?G@E?E@A@C@C@C?}G?o@B[?O@G@UFg@Fs@TaC?K@IF]?CPk@@G?E?CACAA?AAAk@QICAACACACCCAACAAACA?ACAECC?EAE@}@JgCFw@Bc@?EBUF[J[Jg@Ts@FYDY?[ASCMIiAAS@UBMHg@BMNo@F]Hc@DUHYHQDILOHKFSh@w@DI??KQKMOWKSWe@i@y@Ym@a@{@Qe@IY[kAg@yBo@oCI_@QaAKs@Ii@MqAKcACm@Cg@Aa@AYAe@AIC[IqA?GCeA?CEg@AMCa@Mo@CKYw@_@cAM_@m@_BMa@GKWs@Uq@a@sACMEQKi@EUEUMoAAGGiAAKMiAAICYGc@WiB_@cC?AOaAMiAKcBAC?C?CKsAIqAOiBIaAC[U{BY}BCWGu@AKGi@IaAIiAIkAC[WgGE_DA_@CcCAu@A[KkAIw@AQEi@Ca@WoEAQK{@Ky@Gi@Ky@YyBQ_BOkAM}@MeAE[AMEMCMIUKSw@uB_AaC[eAo@oB_AoCSc@c@aAQ[[k@q@cAw@kAu@kAiB{CeAeBKQOUY_@qE}FSWuAoBGGoAmBo@iA_CwDgFgHg@i@i@o@kAyAoC{CkAsAg@k@]i@}@kA]g@iAeBU[eAyAY[u@aASWoDiFQW??mAiBe@{@Ya@u@gA}B_E??qA}BS]Q[Q]ACS]MYc@w@EGYk@i@gAg@_Ag@gAO]We@Ui@]w@Uk@Um@IQ}@oBw@yBA?_@_AIQa@eAAEe@sAACc@qAOe@Sq@aAcDiBcGMa@g@eBa@mAEIYq@O[?AO[CGMUMY[o@Ua@Ye@]m@KWk@eAACq@oAaAcBUc@KSAAKSGK?AGKQ_@GIISKQCGeAyBMYO]Q_@CGy@gBIQIO[i@Yc@Ya@Y]a@e@AAi@i@yAuAKMk@g@SQ}AaBc@e@EGc@g@Y_@IMWe@CGCEk@cAeAkBiAqBYk@mAsBc@_Aa@{@_@u@eA{BUe@O[Qe@k@gAi@gAGKWa@k@_As@gAo@_AWc@]g@Wa@OUMWIOMYK_@EOEKCMCOEUAOCOASAQ?O?KAc@AgEAgAAm@C_DAiB?oA?m@?i@AI?QEiACgACe@CYA]E}@EgAIuA]mDMyAO}BEc@Gg@OoAYmBCQKi@UuAS}@s@uCAEEKIW{BqH}@kCQk@c@{Ai@mBq@}Bm@sBGSw@uCK[aAsC_AoCKYc@cAc@gAW{@Ou@K_@AQCOEUE]M{@IYKWAAOWe@u@IQSYGIQYCEQYiAoBm@eAcAsB??i@FkBPsEd@cAHs@H";
+        $post = [
+            'beginDate' => date('d-m-Y h:i A'),
+            'vehiclename' => $findVechicle,
+            'transactionid' => $transaction_id,
+            'polyline' => $poly_line
+        ];
+        print_r($post);
+        die;
+        // $ch = curl_init('http://202.53.81.216/apemcl/public/api/add_trip_plan_B');
+        // curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        // curl_setopt($ch, CURLOPT_POSTFIELDS, $post);
+
+        // $response = curl_exec($ch);
+        // print_r($response);
+        // var_dump($response);
+
+        // curl_close($ch);
     }
 }

@@ -2,10 +2,13 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\LiveData;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use App\Models\User;
 use Illuminate\Support\Facades\Auth;
+use App\Models\TripplanReport;
+
 
 class DashboardController extends Controller
 {
@@ -16,7 +19,16 @@ class DashboardController extends Controller
      */
     public function index()
     {
-        return view('dashboard.index');
+        $statusCounts = TripplanReport::groupBy('status')
+            ->selectRaw('status, COUNT(*) as count')
+            ->pluck('count', 'status')
+            ->toArray();
+
+        $planned_trips = $statusCounts[1] ?? 0;
+        $process_trips = $statusCounts[2] ?? 0;
+        $completed_trips = $statusCounts[3] ?? 0;
+        return view('dashboard.index', compact('planned_trips', 'process_trips', 'completed_trips',));
+        // return view('dashboard.index');
     }
 
     public function get_apemcl_data(Request $request)
@@ -28,7 +40,7 @@ class DashboardController extends Controller
     {
         date_default_timezone_set('Asia/Kolkata');
         $current_time = date("Y-m-d H:i:s");
-        $query =DB::table('live_data')->select(
+        $query = LiveData::select(
             'vehicle_name',
             'deviceimei',
             'lattitute',
@@ -36,19 +48,18 @@ class DashboardController extends Controller
             'ignition',
             'speed',
             'angle',
-            DB::raw('TIMESTAMPDIFF(MINUTE, device_updatedtime, "'.$current_time.'") AS update_time')
+            DB::raw('TIMESTAMPDIFF(MINUTE, device_updatedtime, "' . $current_time . '") AS update_time')
         )->get();
         $result = [];
         foreach ($query as $key => $value) {
-            $result[$key]['vehicle_name'] = $value->vehicle_name??"";
-            $result[$key]['deviceimei'] = $value->deviceimei??"";
-            $result[$key]['lattitute'] = $value->lattitute??00.0000;
-            $result[$key]['longitute'] = $value->longitute??00.0000;
-            $result[$key]['ignition'] = $value->ignition??0;
-            $result[$key]['speed'] = $value->speed??0;
-            $result[$key]['angle'] = $value->angle??90;
-            $result[$key]['update_time'] = $value->update_time??"";
-
+            $result[$key]['vehicle_name'] = $value->vehicle_name ?? "";
+            $result[$key]['deviceimei'] = $value->deviceimei ?? "";
+            $result[$key]['lattitute'] = $value->lattitute ?? 00.0000;
+            $result[$key]['longitute'] = $value->longitute ?? 00.0000;
+            $result[$key]['ignition'] = $value->ignition ?? 0;
+            $result[$key]['speed'] = $value->speed ?? 0;
+            $result[$key]['angle'] = $value->angle ?? 90;
+            $result[$key]['update_time'] = $value->update_time ?? "";
         }
         return $result;
     }

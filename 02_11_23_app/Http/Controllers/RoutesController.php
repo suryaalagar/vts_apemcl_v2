@@ -128,6 +128,41 @@ class RoutesController extends Controller
         }
     }
 
+    public function generator_route_list(Request $request)
+    {
+        $generator_id = $request->get('generator_id');
+        $receiver_id = $request->get('receiver_id');
+        $data = Routes::select('id', 'routename')->where('generator_id', $generator_id)->where('receiver_id', $receiver_id)->get();
+        if ($data->isEmpty()) {
+            return response([
+                "success" => false,
+                "message" => "No data found",
+            ]);
+        }
+        return response([
+            "success" => true,
+            "data" => $data,
+        ]);
+    }
+
+    public function get_selected_polyline(Request $request)
+    {
+        $id = $request->get('id');
+        $data = Routes::select('route_polyline', 'route_start_lat', 'route_start_lng', 'route_end_lat', 'route_end_lng')->where('id', $id)->first();
+
+        if ($data) {
+            return response([
+                "success" => true,
+                "data" => $data,
+            ]);
+        } else {
+            return response([
+                "success" => false,
+                "message" => "No data found",
+            ]);
+        }
+    }
+
     /**
      * Display the specified resource.
      */

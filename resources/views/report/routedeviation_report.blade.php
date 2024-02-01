@@ -151,6 +151,7 @@
 
     <script type="text/javascript">
         $(document).ready(function() {
+            get_report();
             $("#selectdate1,#selectdate2,#myCheck1").change(function() {
                 get_report();
             });
@@ -242,10 +243,10 @@
                         },
 
                     ],
-                    dom: 'Bfrtip',
-                    buttons: [
-                        'copy', 'csv', 'excel'
-                    ]
+                    // dom: 'Bfrtip',
+                    // buttons: [
+                    //     'copy', 'csv', 'excel'
+                    // ]
 
                 });
             }

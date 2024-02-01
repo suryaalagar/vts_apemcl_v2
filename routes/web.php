@@ -15,6 +15,9 @@ use App\Http\Controllers\RoutesController;
 use Illuminate\Support\Facades\Route;
 
 use App\Http\Controllers\API\CronJob;
+use App\Http\Controllers\Auth\LoginController;
+use Illuminate\Support\Facades\Auth;
+use App\Http\Controllers\PasswordChangeController;
 
 
 /*
@@ -33,6 +36,12 @@ Route::get('demo_test', [PlayBackHistoryReportController::class, 'demo_test'])->
 Route::get('trip_plan_cron', [TripplanReportController::class, 'trip_plan'])->name('tripplanreport.trip_plan');
 Route::get('route_devation_cron',[CronJob::class,'route_devation_cron'])->name('route_deviation.cron');
 Route::get('trip_polyline_create', [CronJob::class, 'trip_polyline_create']);
+Route::POST('create_polyline', [TripplanReportController::class,'create_polyline']);
+Route::get('forgot_password', [PasswordChangeController::class, 'index'])->name('forgot_password');
+Route::POST('change_password', [PasswordChangeController::class, 'change_password'])->name('change_password');
+Route::get('reload_captcha', [LoginController::class, 'reloadCaptcha'])->name('reload_captcha');
+
+
 
 
 Route::middleware('auth')->group(function () {
@@ -77,6 +86,9 @@ Route::middleware('auth')->group(function () {
     Route::get('tripplans_create', [TripplanReportController::class, 'create'])->name('trip.create');
     Route::post('tripplans_store', [TripplanReportController::class, 'store'])->name('trip_plan.store');
     Route::post('tripplan_report_parking', [TripplanReportController::class, 'get_playback_data'])->name('tripplanreport.get_parking');
+    Route::get('generator_route_list', [RoutesController::class, 'generator_route_list'])->name('generator_route_list');
+    Route::get('get_selected_polyline', [RoutesController::class, 'get_selected_polyline'])->name('get_selected_polyline');
+    
 
 });
 

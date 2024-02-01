@@ -15,7 +15,6 @@ class IdleReportController extends Controller
      */
     public function index(Request $request)
     {
-
         $from_date = date('Y-m-d H:i:s', strtotime('00:00:00'));
         $to_date = date('Y-m-d H:i:s', strtotime('23:59:59'));
         return view('report.idle_report',compact( 'from_date', 'to_date'));

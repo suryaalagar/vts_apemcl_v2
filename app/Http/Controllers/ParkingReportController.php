@@ -18,7 +18,8 @@ class ParkingReportController extends Controller
      */
     public function index()
     {
-        $from_date = date('Y-m-d H:i:s', strtotime('00:00:00'));
+        // $from_date = date('Y-m-d H:i:s', strtotime('00:00:00'));
+        $from_date = "2023-12-01 00:00:00";
         $to_date = date('Y-m-d H:i:s', strtotime('23:59:59'));
         $parking_data = ParkingReport::get();
         return view('report.parking_report', compact('parking_data', 'from_date', 'to_date'));
@@ -31,13 +32,17 @@ class ParkingReportController extends Controller
         $address =  $request->input('active');
         $totalFilteredRecord = $totalDataRecord = $draw_val = "";
         $columns_list = array(
-            0 => 'p.id'
+            0 => 'parking_reports.id'
         );
         $start = $request->input('start') + 1;
 
         $totalDataRecord = ParkingReport::count();
 
-        $totalFilteredRecord = $totalDataRecord;
+        $totalFilteredRecord = ParkingReport::whereBetween('parking_reports.start_datetime', [$fromdate, $todate])
+        ->select('parking_reports.vehicle_id', 'v.vehicle_name', 'parking_reports.device_imei', 'parking_reports.start_datetime', 'parking_reports.end_datetime','parking_reports.start_location', 'parking_reports.start_latitude', 'parking_reports.start_longitude', DB::raw('TIMEDIFF(parking_reports.end_datetime, parking_reports.start_datetime) AS time_difference'))
+        ->havingRaw('time_difference >= "00:01:00"')
+        ->join('vehicles AS v', 'v.id', '=', 'parking_reports.vehicle_id')
+        ->count();
 
         $limit_val = $request->input('length');
         $start_val = $request->input('start');
@@ -45,37 +50,34 @@ class ParkingReportController extends Controller
         $dir_val = $request->input('order.0.dir');
 
         if (empty($request->input('search.value'))) {
-            $post_data = DB::table('parking_reports AS p')
-                ->offset($start_val)
-                ->whereBetween('p.start_datetime', [$fromdate, $todate])
+            $post_data = ParkingReport::offset($start_val)
+                ->whereBetween('parking_reports.start_datetime', [$fromdate, $todate])
                 ->limit($limit_val)
                 ->orderBy($order_val, $dir_val)
-                ->select('p.vehicle_id', 'v.vehicle_name', 'p.device_imei', 'p.start_datetime', 'p.end_datetime','p.start_location', 'p.start_latitude', 'p.start_longitude', DB::raw('TIMEDIFF(p.end_datetime, p.start_datetime) AS time_difference'))
-                ->havingRaw('time_difference > "00:01:00"')
-                ->join('vehicles AS v', 'v.id', '=', 'p.vehicle_id')
+                ->select('parking_reports.vehicle_id', 'v.vehicle_name', 'parking_reports.device_imei', 'parking_reports.start_datetime', 'parking_reports.end_datetime','parking_reports.start_location', 'parking_reports.start_latitude', 'parking_reports.start_longitude', DB::raw('TIMEDIFF(parking_reports.end_datetime, parking_reports.start_datetime) AS time_difference'))
+                ->havingRaw('time_difference >= "00:01:00"')
+                ->join('vehicles AS v', 'v.id', '=', 'parking_reports.vehicle_id')
                 ->get();
         } else {
             $search_text = $request->input('search.value');
 
-            $post_data =  DB::table('parking_reports AS p')->where('p.id', 'LIKE', "%{$search_text}%")
+            $post_data =  ParkingReport::where('parking_reports.id', 'LIKE', "%{$search_text}%")
                 ->orWhere('v.vehicle_name', 'LIKE', "%{$search_text}%")
-                ->orWhere('p.device_imei', 'LIKE', "%{$search_text}%")
-                ->whereBetween('p.start_datetime', [$fromdate, $todate])
+                ->orWhere('parking_reports.device_imei', 'LIKE', "%{$search_text}%")
+                ->whereBetween('parking_reports.start_datetime', [$fromdate, $todate])
                 ->limit($limit_val)
                 ->orderBy($order_val, $dir_val)
-                ->select('p.vehicle_id', 'v.vehicle_name', 'p.device_imei', 'p.start_datetime', 'p.end_datetime', 'p.start_latitude', 'p.start_longitude', DB::raw('TIMEDIFF(p.end_datetime, p.start_datetime) AS time_difference'))
-                ->havingRaw('time_difference > "00:01:00"')
-                ->join('vehicles AS v', 'v.id', '=', 'p.vehicle_id')
+                ->select('parking_reports.vehicle_id', 'v.vehicle_name', 'parking_reports.device_imei', 'parking_reports.start_datetime', 'parking_reports.end_datetime','parking_reports.start_location','parking_reports.start_latitude', 'parking_reports.start_longitude', DB::raw('TIMEDIFF(parking_reports.end_datetime, parking_reports.start_datetime) AS time_difference'))
+                ->havingRaw('time_difference >= "00:01:00"')
+                ->join('vehicles AS v', 'v.id', '=', 'parking_reports.vehicle_id')
                 ->get();
 
-            $totalFilteredRecord = DB::table('parking_reports AS p')->where('p.id', 'LIKE', "%{$search_text}%")
+            $totalFilteredRecord = DB::table('parking_reports AS p')->where('parking_reports.id', 'LIKE', "%{$search_text}%")
                 ->orWhere('v.vehicle_name', 'LIKE', "%{$search_text}%")
-                ->orWhere('p.device_imei', 'LIKE', "%{$search_text}%")
-                ->limit($limit_val)
-                ->orderBy($order_val, $dir_val)
-                ->select('p.vehicle_id', 'v.vehicle_name', 'p.device_imei', 'p.start_datetime', 'p.end_datetime', 'p.start_latitude', 'p.start_longitude', DB::raw('TIMEDIFF(p.end_datetime, p.start_datetime) AS time_difference'))
-                ->havingRaw('time_difference > "00:01:00"')
-                ->join('vehicles AS v', 'v.id', '=', 'p.vehicle_id')
+                ->orWhere('parking_reports.device_imei', 'LIKE', "%{$search_text}%")
+                ->select('parking_reports.vehicle_id', 'v.vehicle_name', 'parking_reports.device_imei', 'parking_reports.start_datetime', 'parking_reports.end_datetime', 'parking_reports.start_latitude', 'parking_reports.start_longitude', DB::raw('TIMEDIFF(parking_reports.end_datetime, parking_reports.start_datetime) AS time_difference'))
+                ->havingRaw('time_difference >= "00:01:00"')
+                ->join('vehicles AS v', 'v.id', '=', 'parking_reports.vehicle_id')
                 ->count();
         }
 

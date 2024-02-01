@@ -8,7 +8,7 @@ use App\Models\TripplanReport;
 use Illuminate\Support\Facades\DB;
 use App\Service\AddressService;
 use Carbon\Carbon;
-
+use Illuminate\Support\Facades\Log;
 
 class CronJob extends Controller
 {
@@ -21,6 +21,8 @@ class CronJob extends Controller
         // print_r($data);
         $vehiclename = trim($data['vehiclename']);
         $check_vehicle =  DB::table("vehicles")->select('vehicle_name', 'id','device_imei')->where('vehicle_name', '=', $vehiclename)->first();
+        $DEVICE_imei = $check_vehicle->device_imei;
+        
         if (!empty($check_vehicle)) {
 
             $check_trip = DB::table('tripplan_reports')->select('trip_id', 'status')->where('vehicleid', '=', $check_vehicle->id)->orderBy('trip_id', 'DESC')->first();
@@ -44,7 +46,7 @@ class CronJob extends Controller
                         $created_date = date('Y-m-d H:i:s', $created_date);
                         DB::table('tripplan_reports')->insert([
                             'vehicleid' => $check_vehicle->id,
-                            'device_imei' => $check_vehicle->device_imei,
+                            'device_imei' => $DEVICE_imei,
                             'vehicle_name' => $vehiclename,
                             's_lat' => $data['startlat'],
                             's_lng' => $data['startlng'],
@@ -83,6 +85,7 @@ class CronJob extends Controller
                 DB::table('tripplan_reports')->insert([
                     'vehicleid' => $check_vehicle->id,
                     'vehicle_name' => $vehiclename,
+                    'device_imei' => $DEVICE_imei,
                     's_lat' => $data['startlat'],
                     's_lng' => $data['startlng'],
                     'e_lat' => $data['endlat'],
@@ -107,10 +110,238 @@ class CronJob extends Controller
             return $data1;
         }
     }
+    public function add_trip_plan_B(Request $request)
+    {
+        $data = $request->all();
+        // $mystring = stripslashes($data);
+        // Log::info('My Data', ['my_data' => $mystring]);
+        Log::info('Trip Data', ['trip_data' => $data]);
+        $vehiclename = trim($data['vehiclename']);
+        // $vehiclename1 = $data['vehiclename'];
+        // Log::info('vehicle Data', ['vehicle' => $vehiclename]);
+        // Log::info('vehicle New', ['vehicle' => $vehiclename1]);
+
+        $check_vehicle =  DB::table("vehicles")->select('vehicle_name', 'id', 'device_imei')->where('vehicle_name', '=', $vehiclename)->first();
+       
+        if (!empty($check_vehicle)) {   
+            $check_trip = DB::table('tripplan_reports')->select('trip_id', 'status')->where('vehicleid', '=', $check_vehicle->id)->orderBy('trip_id', 'DESC')->first();
+
+            $route_name = $this->generateRandomString(15);
+            $polyline   = $this->decodePolyline($data['polyline']);
+            $start_lat  = $polyline[0][0];
+            $start_lng  = $polyline[0][1];
+            $end_data   = end($polyline);
+            $end_lat    = $end_data[0];
+            $end_lng    = $end_data[1];
+            if (!empty($check_trip)) {
+
+                $status = $check_trip->status;
+                if ($status == 3) {
+
+                    $insert = DB::table('routes')->insert([
+                        'routename' => $route_name,
+                        'route_start_locationname' => "",
+                        'route_end_locationname' => "",
+                        'route_start_lat' => $start_lat,
+                        'route_start_lng' => $start_lng,
+                        'route_end_lat' => $end_lat,
+                        'route_end_lng' => $end_lng,
+                        'route_polyline' => $data['polyline'],
+                        'created_at' => date('Y-m-d H:i:s')
+                    ]);
+
+                    if ($insert) {
+                        $created_date = strtotime($data['beginDate']);
+                        $created_date = date('Y-m-d H:i:s', $created_date);
+                        DB::table('tripplan_reports')->insert([
+                            'vehicleid' => $check_vehicle->id,
+                            'device_imei' => $check_vehicle->device_imei,
+                            'vehicle_name' => $vehiclename,
+                            's_lat' => $start_lat,
+                            's_lng' => $start_lng,
+                            'e_lat' => $end_lat,
+                            'e_lng' => $end_lng,
+                            'route_name' => $route_name,
+                            'client_id' => 1,
+                            'trip_date' => $created_date,
+                            'poc_number' => $data['transactionid'],
+                            'status' => 1
+                        ]);
+                        $data1['status'] = 1;
+                        $data1['message'] = 'Data Inserted SuccessFully';
+                        return $data1;
+                    }
+                } else {
+                    $data1['status'] = 0;
+                    $data1['message'] = 'Previous Trip Not Completed';
+                    return $data1;
+                }
+            } else {
+
+
+                $insert = DB::table('routes')->insert([
+                    'routename' => $route_name,
+                    'route_start_locationname' => "",
+                    'route_end_locationname' => "",
+                    'route_start_lat' => $start_lat,
+                    'route_start_lng' => $start_lng,
+                    'route_end_lat' => $end_lat,
+                    'route_end_lng' => $end_lng,
+                    'route_polyline' => $data['polyline'],
+                    'created_at' => date('Y-m-d H:i:s')
+                ]);
+
+                if ($insert) {
+                    $created_date = strtotime($data['beginDate']);
+                    $created_date = date('Y-m-d H:i:s', $created_date);
+                    DB::table('tripplan_reports')->insert([
+                        'vehicleid' => $check_vehicle->id,
+                        'device_imei' => $check_vehicle->device_imei,
+                        'vehicle_name' => $vehiclename,
+                        's_lat' => $start_lat,
+                        's_lng' => $start_lng,
+                        'e_lat' => $end_lat,
+                        'e_lng' => $end_lng,
+                        'route_name' => $route_name,
+                        'client_id' => 1,
+                        'trip_date' => $created_date,
+                        'poc_number' => $data['transactionid'],
+                        'status' => 1
+                    ]);
+                    $data1['status'] = 1;
+                    $data1['message'] = 'Data Inserted SuccessFully';
+                    return $data1;
+                }
+            }
+        } else {
+            $data1['status'] = 0;
+            $data1['message'] = 'Vehicle Not Found..';
+            return $data1;
+        }
+    }
+
+    function generateRandomString($length = 10)
+    {
+        $characters = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+        $randomString = '';
+
+        for ($i = 0; $i < $length; $i++) {
+            $randomString .= $characters[rand(0, strlen($characters) - 1)];
+        }
+
+        return $randomString;
+    }
+
+    // public function route_devation_cron()
+    // {
+    //     DB::table('test_tbl')->insert([
+    //         "name" => 'Deviate FUN Insert',
+    //         'created_at' => date('Y-m-d H:i:s')
+    //      ]);
+    //     // $vehicle_list =  $this->Cron_test_model->get_route_deviation_vehicles();
+    //     $vehicle_list = DB::table('tripplan_reports AS tr')
+    //         ->select(
+    //             'tr.route_name',
+    //             'tr.status',
+    //             'tp.route_polyline',
+    //             'l.lattitute',
+    //             'l.longitute',
+    //             'l.ignition',
+    //             'l.speed',
+    //             'tr.device_imei',
+    //             'tr.vehicle_name',
+    //             'l.device_updatedtime'
+    //         )
+    //         ->join('routes AS tp', 'tr.route_name', '=', 'tp.routename')
+    //         ->join('live_data AS l', 'l.deviceimei', '=', 'tr.device_imei')
+    //         ->whereIn('tr.status', [2])
+    //         ->get()->toArray();
+
+
+    //     if (!empty($vehicle_list)) {
+
+    //         foreach ($vehicle_list as $key) {
+    //             $decodedPolyline = $this->decodePolyline($key->route_polyline);
+    //             // dd($decodedPolyline);
+    //             $yes = 0;
+    //             // $route_id = $route_list->route_id;
+    //             $radius = 500;
+    //             $lat = $key->lattitute; //latitude
+    //             $lng =  $key->longitute; //longitude
+
+    //             $isInside = $this->isPointInsidePolylinewithRadius($lat, $lng, $decodedPolyline, $radius);
+    //             if ($isInside) {
+
+    //                 $rd_qry = DB::table('routedeviation_reports')
+    //                     ->select('id', 'route_name', 'vehicle_imei', 'vehicle_name', 'route_deviate_outtime', 'route_deviate_intime', 'route_out_lat', 'route_out_lng', 'route_in_lat', 'route_in_lng')
+    //                     ->where('vehicle_imei', $key->device_imei)
+    //                     ->whereNull('route_deviate_intime')
+    //                     ->orderBy('route_deviate_outtime', 'desc')
+    //                     ->limit(1);
+    //                 // $rd_qry = $this->db->query("select rd_id,vehicle_imei,route_id from route_deviate_report where vehicle_imei = '" . $key->deviceimei . "' AND client_id = '" . $key->client_id . "' AND (route_deviate_intime IS NULL) ORDER BY route_deviate_outtime DESC LIMIT 1");
+    //                 $rd_fet = $rd_qry->first();
+    //                 if (!empty($rd_fet)) {
+    //                     $route_in_address = $this->get_address($key->lattitute, $key->longitute);
+    //                     $deivate_data = array(
+    //                         'route_deviate_intime' =>  $key->device_updatedtime,
+    //                         "route_in_lat" => $key->lattitute,
+    //                         "route_in_lng" => $key->longitute,
+    //                         "route_in_location" => $route_in_address,
+    //                         'updated_at' => date('Y-m-d H:i:s')
+    //                     );
+    //                     DB::table('routedeviation_reports')
+    //                         ->where('id', array($rd_fet->id))
+    //                         ->update($deivate_data);
+
+    //                     dd("Updated");
+    //                     DB::table('test_tbl')->insert([
+    //                         "name" => 'Deviate Already Updated',
+    //                      ]);
+    //                 }
+    //             } else {
+    //                 $rd_qry = DB::table('routedeviation_reports')
+    //                     ->select('id', 'route_name', 'vehicle_imei', 'vehicle_name', 'route_deviate_outtime', 'route_deviate_intime', 'route_out_lat', 'route_out_lng', 'route_in_lat', 'route_in_lng')
+    //                     ->where('vehicle_imei', $key->device_imei)
+    //                     ->whereNull('route_deviate_intime')
+    //                     ->orderBy('route_deviate_outtime', 'desc')
+    //                     ->limit(1);
+    //                 // $rd_qry = $this->db->query("select rd_id,vehicle_imei,route_id from route_deviate_report where vehicle_imei = '" . $key->deviceimei . "' AND client_id = '" . $key->client_id . "' AND (route_deviate_intime IS NULL) ORDER BY route_deviate_outtime DESC LIMIT 1");
+    //                 $rd_fet = $rd_qry->first();
+    //                 if (empty($rd_fet)) {
+    //                     $route_out_address = $this->get_address($key->lattitute, $key->longitute);
+    //                     DB::table('routedeviation_reports')->insert(
+    //                         [
+    //                             "route_deviate_outtime" => $key->device_updatedtime,
+    //                             "route_out_lat" => $key->lattitute,
+    //                             "route_out_lng" => $key->longitute,
+    //                             "route_out_location" => $route_out_address,
+    //                             "client_id" => 1,
+    //                             "vehicle_imei" => $key->device_imei,
+    //                             "route_name" => $key->route_name,
+    //                             "vehicle_name" => $key->vehicle_name,
+    //                             'created_at' => date('Y-m-d H:i:s')
+    //                         ]
+    //                     );
+    //                     dd("inserted");
+    //                     DB::table('test_tbl')->insert([
+    //                         "name" => 'Deviate inserted',
+    //                         'created_at' => date('Y-m-d H:i:s')
+    //                      ]);
+    //                 } else {
+    //                     dd("Already Inserted");
+    //                     DB::table('test_tbl')->insert([
+    //                         "name" => 'Deviate Already Inserted',
+    //                         'created_at' => date('Y-m-d H:i:s')
+    //                      ]);
+    //                 }
+    //             }
+    //         }
+    //     }
+    //     // $this->complete_trip_routein_get();
+    // }
 
     public function route_devation_cron()
     {
-        // $vehicle_list =  $this->Cron_test_model->get_route_deviation_vehicles();
         $vehicle_list = DB::table('tripplan_reports AS tr')
             ->select(
                 'tr.route_name',
@@ -128,7 +359,7 @@ class CronJob extends Controller
             ->join('live_data AS l', 'l.deviceimei', '=', 'tr.device_imei')
             ->whereIn('tr.status', [2])
             ->get()->toArray();
-
+        // print_r($vehicle_list);die;
         if (!empty($vehicle_list)) {
 
             foreach ($vehicle_list as $key) {
@@ -141,6 +372,7 @@ class CronJob extends Controller
                 $lng =  $key->longitute; //longitude
 
                 $isInside = $this->isPointInsidePolylinewithRadius($lat, $lng, $decodedPolyline, $radius);
+                print_r($isInside);
                 if ($isInside) {
 
                     $rd_qry = DB::table('routedeviation_reports')
@@ -163,7 +395,13 @@ class CronJob extends Controller
                         DB::table('routedeviation_reports')
                             ->where('id', array($rd_fet->id))
                             ->update($deivate_data);
-
+                        $params_arr = array(
+                            "alert_time" => $key->device_updatedtime,
+                            "alert_location" => $route_in_address,
+                            "vehicle_name" => $key->vehicle_name,
+                            "alert_type" => "Route Deviation IN",
+                        );
+                        $this->Test_WA_alerts_testing2($params_arr);
                         dd("Updated");
                     }
                 } else {
@@ -177,7 +415,7 @@ class CronJob extends Controller
                     $rd_fet = $rd_qry->first();
                     if (empty($rd_fet)) {
                         $route_out_address = $this->get_address($key->lattitute, $key->longitute);
-                        DB::table('routedeviation_reports')->insert(
+                         DB::table('routedeviation_reports')->insert(
                             [
                                 "route_deviate_outtime" => $key->device_updatedtime,
                                 "route_out_lat" => $key->lattitute,
@@ -190,6 +428,13 @@ class CronJob extends Controller
                                 'created_at' => date('Y-m-d H:i:s')
                             ]
                         );
+                        $params_arr = array(
+                            "alert_time" => $key->device_updatedtime,
+                            "alert_location" => $route_out_address,
+                            "vehicle_name" => $key->vehicle_name,
+                            "alert_type" => "Route Deviation Out",
+                        );
+					$this->Test_WA_alerts_testing2($params_arr);
                         dd("inserted");
                     } else {
                         dd("Already Inserted");
@@ -433,4 +678,65 @@ class CronJob extends Controller
             return $data1;
         }
     }
+
+    public function add_trip_curl(){
+
+        $findVechicle = "AP31TG7497";
+        $transaction_id = "transaction_6473862";
+        $poly_line = "wuibA}ortMA[EwBIkBIuAG}AUcF??w@RYFoAV??KwBGsAMoAGaAGmACq@CWGmBAeBIgBCmA@mAFmJ??@I`AEn@Cr@?B?|BGLA|@EHAp@G\Cz@GZCRCLAr@EB?RCf@Cx@ETATA`@AdAGd@A~@ENA???eAAiAAMAWAQ?AAQ?CG{@E]AI?C?G?G?Q?_@@_@?W?O?m@?I@K?OB_@?s@?I?A@E@GBEDGBA@CNKh@YVMl@]ZQBCNKrB{AHCHAB?H?H@F@D@@?x@PVDz@Lp@FdBNFAD?FCDE@A@C@A@E?IAuE?yA@aK??AStBEN?`AA|@?j@Aj@?vAA~AC`@ALAnCK`AAzAFnEC??BOBGHYVs@HMTe@f@m@???A?A?A?A?A@??A?A@??A@?IsAGm@Iq@a@sDKq@OsA[sCMeAIw@]eDCU_@cD???wAAAAOSgBK{@Ea@QoA[}B[oCGc@Eg@QwAYwBIu@E_@Ea@E]C]E]E[AMGm@AS?W?wAAmA?mA?o@?CAaAAq@?s@?A?]?I?W?k@Ae@?e@?w@AsC?yA?GAM?K?CAc@CyAC}BAC?G?G?ICaC?a@?M?G?G?Q?A?M?]?e@Ay@@y@?i@A{BCQEKCG??AaA@sA?E?G@E?E@A@C@C@C?}G?o@B[?O@G@UFg@Fs@TaC?K@IF]?CPk@@G?E?CACAA?AAAk@QICAACACACCCAACAAACA?ACAECC?EAE@}@JgCFw@Bc@?EBUF[J[Jg@Ts@FYDY?[ASCMIiAAS@UBMHg@BMNo@F]Hc@DUHYHQDILOHKFSh@w@DI??KQKMOWKSWe@i@y@Ym@a@{@Qe@IY[kAg@yBo@oCI_@QaAKs@Ii@MqAKcACm@Cg@Aa@AYAe@AIC[IqA?GCeA?CEg@AMCa@Mo@CKYw@_@cAM_@m@_BMa@GKWs@Uq@a@sACMEQKi@EUEUMoAAGGiAAKMiAAICYGc@WiB_@cC?AOaAMiAKcBAC?C?CKsAIqAOiBIaAC[U{BY}BCWGu@AKGi@IaAIiAIkAC[WgGE_DA_@CcCAu@A[KkAIw@AQEi@Ca@WoEAQK{@Ky@Gi@Ky@YyBQ_BOkAM}@MeAE[AMEMCMIUKSw@uB_AaC[eAo@oB_AoCSc@c@aAQ[[k@q@cAw@kAu@kAiB{CeAeBKQOUY_@qE}FSWuAoBGGoAmBo@iA_CwDgFgHg@i@i@o@kAyAoC{CkAsAg@k@]i@}@kA]g@iAeBU[eAyAY[u@aASWoDiFQW??mAiBe@{@Ya@u@gA}B_E??qA}BS]Q[Q]ACS]MYc@w@EGYk@i@gAg@_Ag@gAO]We@Ui@]w@Uk@Um@IQ}@oBw@yBA?_@_AIQa@eAAEe@sAACc@qAOe@Sq@aAcDiBcGMa@g@eBa@mAEIYq@O[?AO[CGMUMY[o@Ua@Ye@]m@KWk@eAACq@oAaAcBUc@KSAAKSGK?AGKQ_@GIISKQCGeAyBMYO]Q_@CGy@gBIQIO[i@Yc@Ya@Y]a@e@AAi@i@yAuAKMk@g@SQ}AaBc@e@EGc@g@Y_@IMWe@CGCEk@cAeAkBiAqBYk@mAsBc@_Aa@{@_@u@eA{BUe@O[Qe@k@gAi@gAGKWa@k@_As@gAo@_AWc@]g@Wa@OUMWIOMYK_@EOEKCMCOEUAOCOASAQ?O?KAc@AgEAgAAm@C_DAiB?oA?m@?i@AI?QEiACgACe@CYA]E}@EgAIuA]mDMyAO}BEc@Gg@OoAYmBCQKi@UuAS}@s@uCAEEKIW{BqH}@kCQk@c@{Ai@mBq@}Bm@sBGSw@uCK[aAsC_AoCKYc@cAc@gAW{@Ou@K_@AQCOEUE]M{@IYKWAAOWe@u@IQSYGIQYCEQYiAoBm@eAcAsB??i@FkBPsEd@cAHs@H";
+        $post = [
+            'beginDate' => date('d-m-Y h:i A'),
+            'vehiclename' => $findVechicle,
+            'transactionid' => $transaction_id,
+            'polyline' => $poly_line
+        ];
+        //print_r($post);die;
+        $ch = curl_init('http://202.53.81.216/apemcl/public/api/add_trip_plan_B');
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        curl_setopt($ch, CURLOPT_POSTFIELDS, $post);
+
+        $response = curl_exec($ch);
+        print_r($response);
+        var_dump($response);
+
+        curl_close($ch);
+    }
+
+    public function Test_WA_alerts_testing2($params_arr)
+	{
+		$data = urlencode("
+*APEMCL*
+					
+	*Vehicle Number*: " . $params_arr['vehicle_name'] . "
+	*Alert Type*: " . $params_arr['alert_type'] . "
+	*Alert time*: " . $params_arr['alert_time'] . "
+	*Alert location*: " . $params_arr['alert_location'] . " ");
+
+
+		$contact_arr = array("916383883745", "919095311990","919381346169");
+		// $contact_arr = array("916383883745");
+		foreach ($contact_arr as $key => $contact) {
+
+			$url = "https://pingerbot.in/api/send?number=" . $contact . "&type=text&message=" . $data . "&instance_id=654C8239E65D9&access_token=654bbc7c4f749";
+			$curl = curl_init();
+			curl_setopt_array($curl, array(
+				CURLOPT_URL => $url,
+				CURLOPT_RETURNTRANSFER => true,
+				CURLOPT_ENCODING => '',
+				CURLOPT_MAXREDIRS => 10,
+				CURLOPT_TIMEOUT => 0,
+				CURLOPT_FOLLOWLOCATION => true,
+				CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
+				CURLOPT_CUSTOMREQUEST => 'GET',
+				CURLOPT_HEADER => true
+			));
+
+			curl_setopt($curl, CURLOPT_SSL_VERIFYHOST, false);
+			curl_setopt($curl, CURLOPT_SSL_VERIFYPEER, false);
+
+			$response = curl_exec($curl);
+
+			curl_close($curl);
+		}
+	}
 }

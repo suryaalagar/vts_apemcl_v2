@@ -71,4 +71,45 @@ trait AddressService
         $encodeString .= chr($finalValue);
         return $encodeString;
     }
+
+    function decodePolyline($encodedString)
+    {
+        $length = strlen($encodedString);
+        $index = 0;
+        $points = [];
+        $lat = 0;
+        $lng = 0;
+
+        while ($index < $length) {
+            $b = 0;
+            $shift = 0;
+            $result = 0;
+
+            do {
+                $b = ord($encodedString[$index++]) - 63;
+                $result |= ($b & 0x1f) << $shift;
+                $shift += 5;
+            } while ($b >= 0x20);
+
+            $dlat = (($result & 1) ? ~($result >> 1) : ($result >> 1));
+            $lat += $dlat;
+
+            $b = 0;
+            $shift = 0;
+            $result = 0;
+
+            do {
+                $b = ord($encodedString[$index++]) - 63;
+                $result |= ($b & 0x1f) << $shift;
+                $shift += 5;
+            } while ($b >= 0x20);
+
+            $dlng = (($result & 1) ? ~($result >> 1) : ($result >> 1));
+            $lng += $dlng;
+
+            $points[] = [$lat * 1e-5, $lng * 1e-5];
+        }
+
+        return $points;
+    }
 }

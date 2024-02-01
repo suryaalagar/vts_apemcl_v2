@@ -110,7 +110,7 @@
                                                 </label>
                                             </div> --}}
                                                 <br />
-                                                <h3 align="center">Trip Plan Report</h3>
+                                                <h3 align="center">Completed Trips Report</h3>
 
                                                 <br />
                                                 <table class="table table-striped table-bordered" id="datatable">
@@ -118,14 +118,14 @@
                                                         <tr>
                                                             <th>S.No</th>
                                                             <th>Trip id</th>
-                                                            <th>POC Number</th>
+                                                            <th>Transaction Id</th>
                                                             <th>Device IMEI</th>
                                                             <th>TripDate</th>
-                                                            <th>Vehicle Name</th>
+                                                            <th>Vehicle Number</th>
                                                             <th>Route Name</th>
-                                                            <th>Start Odometer</th>
-                                                            <th>End Odometer</th>
-                                                            <th>Total K.M</th>
+                                                            {{-- <th>Start Odometer</th>
+                                                            <th>End Odometer</th> --}}
+                                                            <th>K.M Travelled</th>
                                                             <th>Start Time</th>
                                                             <th>End Time</th>
                                                             <th>Trip Duration</th>
@@ -168,7 +168,7 @@
                     <div class="modal-body modal_offset">
                         <div class="row">
                             <div class="col-md-12 modal_body_content">
-                                <p>Location : Karnataka</p>
+                                {{-- <p>Location : Karnataka</p> --}}
                             </div>
                         </div>
                         <div class="row">
@@ -195,6 +195,7 @@
 @push('scripts')
     <script type="text/javascript">
         $(document).ready(function() {
+            get_report();
             $("#selectdate1,#selectdate2,#myCheck1").change(function() {
                 get_report();
             });
@@ -247,14 +248,14 @@
                             data: 'route_name',
                             name: 'route_name'
                         },
-                        {
-                            data: 'start_odometer',
-                            name: 'start_odometer'
-                        },
-                        {
-                            data: 'end_odometer',
-                            name: 'end_odometer'
-                        },
+                        // {
+                        //     data: 'start_odometer',
+                        //     name: 'start_odometer'
+                        // },
+                        // {
+                        //     data: 'end_odometer',
+                        //     name: 'end_odometer'
+                        // },
                         {
                             data: 'total_km',
                             name: 'total_km'
@@ -330,8 +331,10 @@
         var assetLayerGroup = new L.LayerGroup();
         var first_time = true;
         var mapIntervals = [];
+        var parkmarkerss = [];
 
         function test_function(trip_id, start_time, end_time, device_imei) {
+            clearParkMarkers();
             console.log("first " + device_imei)
             $("#myModal").modal("show");
             setTimeout(function() {
@@ -354,6 +357,13 @@
                 clearInterval(mapIntervals[i]);
             }
             mapIntervals = []; // Reset the array
+        }
+
+        function clearParkMarkers() {
+            for (var i = 0; i < parkmarkerss.length; i++) {
+                map.removeLayer(parkmarkerss[i]);
+            }
+            parkmarkerss = []; // Reset the array
         }
 
         document.getElementById('modalCloseButton').addEventListener('click', function() {
@@ -443,38 +453,38 @@
                             color: 'green'
                         }).addTo(fg);
 
-                        if (tripplan[i].update_time <= 10) {
-                            if (tripplan[i].ignition == 1) {
-                                if (tripplan[i].speed > 0) {
+                        // if (tripplan[i].update_time <= 10) {
+                        //     if (tripplan[i].ignition == 1) {
+                        //         if (tripplan[i].speed > 0) {
 
-                                    var image_path = "{{ asset('assets/dist/img/ICONS/GREEN/truck.png') }}";
+                        //             var image_path = "{{ asset('assets/dist/img/ICONS/GREEN/truck.png') }}";
 
-                                } else {
-                                    var image_path = "{{ asset('assets/dist/img/ICONS/YELLOW/truck.png') }}";
-                                }
-                            } else {
-                                var image_path = "{{ asset('assets/dist/img/ICONS/BLUE/truck.png') }}";
-                            }
-                        } else {
-                            var image_path = "{{ asset('assets/dist/img/ICONS/GRAY/truck.png') }}";
-                        }
-                        var speed = tripplan[i].speed == null ? 0 : tripplan[i].speed;
-                        var redIcon = new L.Icon({
-                            iconUrl: image_path,
-                            iconSize: [40, 40],
-                        });
+                        //         } else {
+                        //             var image_path = "{{ asset('assets/dist/img/ICONS/YELLOW/truck.png') }}";
+                        //         }
+                        //     } else {
+                        //         var image_path = "{{ asset('assets/dist/img/ICONS/BLUE/truck.png') }}";
+                        //     }
+                        // } else {
+                        //     var image_path = "{{ asset('assets/dist/img/ICONS/GRAY/truck.png') }}";
+                        // }
+                        // var speed = tripplan[i].speed == null ? 0 : tripplan[i].speed;
+                        // var redIcon = new L.Icon({
+                        //     iconUrl: image_path,
+                        //     iconSize: [40, 40],
+                        // });
 
-                        var angle = tripplan[i].angle;
+                        // var angle = tripplan[i].angle;
 
-                        marker = new L.marker([tripplan[i].lattitute, tripplan[i].longitute], {
-                                icon: redIcon,
-                                rotationAngle: angle
-                            })
-                            .addTo(fg);
-                        map.addLayer(marker);
+                        // marker = new L.marker([tripplan[i].lattitute, tripplan[i].longitute], {
+                        //         icon: redIcon,
+                        //         rotationAngle: angle
+                        //     })
+                        //     .addTo(fg);
+                        // map.addLayer(marker);
 
-                        markers.push(marker);
-                        assetLayerGroup.addLayer(marker);
+                        // markers.push(marker);
+                        // assetLayerGroup.addLayer(marker);
 
                         map.fitBounds(planned_polyline.getBounds());
 
@@ -485,7 +495,7 @@
         }
 
         function park_marker(start_time, end_time, device_imei) {
-            var parkmarkerss = [];
+
             console.log("come " + device_imei);
             console.log("come1 " + start_time);
             console.log("come2 " + end_time);
@@ -499,14 +509,11 @@
                     to_date: end_time,
                 },
                 success: function(data) {
-                    
+
                     var parkdata = data;
-                    console.log(parkdata);
-
-
 
                     for (var i = 0; i < parkdata.length; i++) {
-                        //console.log(parkdata[i].s_lat);
+
                         var smallIcon = new L.Icon({
                             iconSize: [40, 40],
                             iconAnchor: [13, 27],
@@ -521,7 +528,7 @@
 
                         parkmarker = L.marker([parkdata[i].start_latitude, parkdata[i].start_longitude], {
                             icon: smallIcon
-                        }).addTo(fg);
+                        }).addTo(map);
 
                         map.addLayer(parkmarker);
 

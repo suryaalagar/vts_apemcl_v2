@@ -65,7 +65,7 @@
                                         </fieldset>
                                     </div>
 
-                                    <input type="text" name="id" id="id" value="{{ $vehicle->id }}">
+                                    <input type="hidden" name="id" id="id" value="{{ $vehicle->id }}">
                                     <input type="hidden" name="vehicle_type_id" id="vehicle_type_id" value="1">
 
                                     <div class="col-xl-12 col-lg-12 col-md-12">
