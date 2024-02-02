@@ -13,6 +13,7 @@ class ParkingReportController extends Controller
     /**
      * Display a listing of the resource.
      */
+    
     public function index()
     {
         $parking_data = ParkingReport::get();
