@@ -20,9 +20,9 @@ class CronJob extends Controller
         $data = $request->all();
         // print_r($data);
         $vehiclename = trim($data['vehiclename']);
-        $check_vehicle =  DB::table("vehicles")->select('vehicle_name', 'id','device_imei')->where('vehicle_name', '=', $vehiclename)->first();
+        $check_vehicle =  DB::table("vehicles")->select('vehicle_name', 'id', 'device_imei')->where('vehicle_name', '=', $vehiclename)->first();
         $DEVICE_imei = $check_vehicle->device_imei;
-        
+
         if (!empty($check_vehicle)) {
 
             $check_trip = DB::table('tripplan_reports')->select('trip_id', 'status')->where('vehicleid', '=', $check_vehicle->id)->orderBy('trip_id', 'DESC')->first();
@@ -37,9 +37,9 @@ class CronJob extends Controller
                     //     'route_name' => $data['routename'],
                     // ]);
                     $routes = DB::table('routes')
-                    ->select('id', 'routename')
-                    ->where('routename', '=', $data['routename'])
-                    ->first();
+                        ->select('id', 'routename')
+                        ->where('routename', '=', $data['routename'])
+                        ->first();
 
                     if (!empty($routes)) {
                         $created_date = strtotime($data['beginDate']);
@@ -61,12 +61,11 @@ class CronJob extends Controller
                         $data1['status'] = 1;
                         $data1['message'] = 'Data Inserted SuccessFully';
                         return $data1;
-                    }else{
+                    } else {
                         $data1['status'] = 1;
                         $data1['message'] = 'Route Not Found..';
                         return $data1;
                     }
-                 
                 } else {
                     $data1['status'] = 0;
                     $data1['message'] = 'Previous Trip Not Completed';
@@ -75,9 +74,9 @@ class CronJob extends Controller
             }
 
             $routes = DB::table('routes')
-            ->select('id', 'routename')
-            ->where('routename', '=', $data['routename'])
-            ->first();
+                ->select('id', 'routename')
+                ->where('routename', '=', $data['routename'])
+                ->first();
 
             if (!empty($routes)) {
                 $created_date = strtotime($data['beginDate']);
@@ -99,7 +98,7 @@ class CronJob extends Controller
                 $data1['status'] = 1;
                 $data1['message'] = 'Data Inserted SuccessFully';
                 return $data1;
-            }else{
+            } else {
                 $data1['status'] = 1;
                 $data1['message'] = 'Route Not Found..';
                 return $data1;
@@ -122,8 +121,8 @@ class CronJob extends Controller
         // Log::info('vehicle New', ['vehicle' => $vehiclename1]);
 
         $check_vehicle =  DB::table("vehicles")->select('vehicle_name', 'id', 'device_imei')->where('vehicle_name', '=', $vehiclename)->first();
-       
-        if (!empty($check_vehicle)) {   
+
+        if (!empty($check_vehicle)) {
             $check_trip = DB::table('tripplan_reports')->select('trip_id', 'status')->where('vehicleid', '=', $check_vehicle->id)->orderBy('trip_id', 'DESC')->first();
 
             $route_name = $this->generateRandomString(15);
@@ -402,7 +401,7 @@ class CronJob extends Controller
                             "alert_type" => "Route Deviation IN",
                         );
                         $this->Test_WA_alerts_testing2($params_arr);
-                        dd("Updated");
+                        // dd("Updated");
                     }
                 } else {
                     $rd_qry = DB::table('routedeviation_reports')
@@ -415,7 +414,7 @@ class CronJob extends Controller
                     $rd_fet = $rd_qry->first();
                     if (empty($rd_fet)) {
                         $route_out_address = $this->get_address($key->lattitute, $key->longitute);
-                         DB::table('routedeviation_reports')->insert(
+                        DB::table('routedeviation_reports')->insert(
                             [
                                 "route_deviate_outtime" => $key->device_updatedtime,
                                 "route_out_lat" => $key->lattitute,
@@ -434,10 +433,9 @@ class CronJob extends Controller
                             "vehicle_name" => $key->vehicle_name,
                             "alert_type" => "Route Deviation Out",
                         );
-					$this->Test_WA_alerts_testing2($params_arr);
-                        dd("inserted");
+                        $this->Test_WA_alerts_testing2($params_arr);
                     } else {
-                        dd("Already Inserted");
+                        print_r("Already Inserted");
                     }
                 }
             }
@@ -641,7 +639,7 @@ class CronJob extends Controller
                 // dd($playback);
 
                 $polyline = $this->trip_plan_encoded($playback);
-                dd($polyline);
+                // dd($polyline);
 
                 if ($polyline) {
                     DB::table('completed_polylines')->insert([
@@ -679,7 +677,8 @@ class CronJob extends Controller
         }
     }
 
-    public function add_trip_curl(){
+    public function add_trip_curl()
+    {
 
         $findVechicle = "AP31TG7497";
         $transaction_id = "transaction_6473862";
@@ -703,8 +702,8 @@ class CronJob extends Controller
     }
 
     public function Test_WA_alerts_testing2($params_arr)
-	{
-		$data = urlencode("
+    {
+        $data = urlencode("
 *APEMCL*
 					
 	*Vehicle Number*: " . $params_arr['vehicle_name'] . "
@@ -713,30 +712,62 @@ class CronJob extends Controller
 	*Alert location*: " . $params_arr['alert_location'] . " ");
 
 
-		$contact_arr = array("916383883745", "919095311990","919381346169");
-		// $contact_arr = array("916383883745");
-		foreach ($contact_arr as $key => $contact) {
+        $contact_arr = array("916383883745", "919095311990", "919381346169");
+        // $contact_arr = array("916383883745");
+        foreach ($contact_arr as $key => $contact) {
 
-			$url = "https://pingerbot.in/api/send?number=" . $contact . "&type=text&message=" . $data . "&instance_id=654C8239E65D9&access_token=654bbc7c4f749";
-			$curl = curl_init();
-			curl_setopt_array($curl, array(
-				CURLOPT_URL => $url,
-				CURLOPT_RETURNTRANSFER => true,
-				CURLOPT_ENCODING => '',
-				CURLOPT_MAXREDIRS => 10,
-				CURLOPT_TIMEOUT => 0,
-				CURLOPT_FOLLOWLOCATION => true,
-				CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
-				CURLOPT_CUSTOMREQUEST => 'GET',
-				CURLOPT_HEADER => true
-			));
+            $url = "https://pingerbot.in/api/send?number=" . $contact . "&type=text&message=" . $data . "&instance_id=654C8239E65D9&access_token=654bbc7c4f749";
+            $curl = curl_init();
+            curl_setopt_array($curl, array(
+                CURLOPT_URL => $url,
+                CURLOPT_RETURNTRANSFER => true,
+                CURLOPT_ENCODING => '',
+                CURLOPT_MAXREDIRS => 10,
+                CURLOPT_TIMEOUT => 0,
+                CURLOPT_FOLLOWLOCATION => true,
+                CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
+                CURLOPT_CUSTOMREQUEST => 'GET',
+                CURLOPT_HEADER => true
+            ));
 
-			curl_setopt($curl, CURLOPT_SSL_VERIFYHOST, false);
-			curl_setopt($curl, CURLOPT_SSL_VERIFYPEER, false);
+            curl_setopt($curl, CURLOPT_SSL_VERIFYHOST, false);
+            curl_setopt($curl, CURLOPT_SSL_VERIFYPEER, false);
 
-			$response = curl_exec($curl);
+            $response = curl_exec($curl);
 
-			curl_close($curl);
-		}
-	}
+            curl_close($curl);
+        }
+    }
+
+    public function incompleted_trips()
+    {
+        $data = TripplanReport::select('trip_id', 'vehicleid', 'device_imei', 'route_id', 'vehicle_name', 'poc_number', 'route_name', 'status', 'trip_date AS trip_created_time', 'start_odometer', 'end_odometer', 'distance', 'created_at AS trip_start_time', 'updated_at AS trip_end_time')
+            ->whereIn('status', [1, 2])->get();
+        return $data;
+    }
+
+    public function manual_complete_trips(Request $request)
+    {
+        $data = $request->all();
+        $update_arr = array(
+            'start_odometer' => $data['start_odometer'],
+            'end_odometer' => $data['end_odometer'],
+            'trip_date'=> $data['trip_create_time'],
+            'created_at' => $data['trip_start_time'],
+            'updated_at' => $data['trip_end_time'],
+            'status' => $data['status'],
+        );
+        $update = TripplanReport::whereIn('trip_id', array($data['trip_id']))
+            ->update($update_arr); 
+    
+        if($update){
+            $data1['status'] = 1;
+            $data1['message'] = 'Trip Updated Successfuly...';
+            return $data1;
+        }else{
+            $data1['status'] = 0;
+            $data1['message'] = 'Trip not updated';
+            return $data1;
+        }
+    }
 }

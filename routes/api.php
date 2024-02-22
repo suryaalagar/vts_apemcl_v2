@@ -29,6 +29,9 @@ Route::get('route_devation_cron', [CronJob::class, 'route_devation_cron']);
 Route::POST('vehicle_status', [VehicleApiController::class, 'vehicle_status']);
 Route::POST('create_polyline', [CronJob::class,'create_polyline']);
 Route::POST('add_trip_curl', [CronJob::class, 'add_trip_curl']);
+Route::get('incompleted_trips', [CronJob::class, 'incompleted_trips']);
+Route::POST('manual_complete_trips', [CronJob::class,'manual_complete_trips']);
+
 
 
 
