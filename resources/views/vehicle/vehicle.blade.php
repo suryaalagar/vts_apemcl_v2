@@ -158,8 +158,13 @@
 
                     processing: true,
                     serverSide: true,
-                    method: 'GET',
-                    ajax: "{{ route('vehicle.getData') }}",
+                    ajax: {
+                        url: "{{ route('vehicle.getData') }}",
+                        type: "POST",
+                        data: {
+                            _token: "{{ csrf_token() }}",
+                        }
+                    },
                     columns: [{
                             data: 'S No',
                             name: 'S No'

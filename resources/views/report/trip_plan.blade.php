@@ -212,7 +212,7 @@
                     destroy: true,
                     ajax: {
                         url: "{{ route('tripplanreport.complete_report_getData') }}",
-                        type: "GET",
+                        type: "POST",
                         data: {
                             _token: "{{ csrf_token() }}",
                             fromdate: fromdate,

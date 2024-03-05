@@ -214,8 +214,11 @@
 
             $.ajax({
                 url: '{{ route('dashboard.all_vehicles') }}',
-                type: 'GET',
+                type: 'POST',
                 dataType: "json",
+                headers: {
+                    'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+                },
                 success: function(data) {
 
                     if (fg) {

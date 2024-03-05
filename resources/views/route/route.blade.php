@@ -160,8 +160,13 @@
 
                     processing: true,
                     serverSide: true,
-                    method: 'GET',
-                    ajax: "{{ route('route.getData') }}",
+                    ajax: {
+                        url: "{{ route('route.getData') }}",
+                        type: "POST",
+                        data: {
+                            _token: "{{ csrf_token() }}",
+                        }
+                    },
                     columns: [{
                             data: 'S No',
                             name: 'S No'

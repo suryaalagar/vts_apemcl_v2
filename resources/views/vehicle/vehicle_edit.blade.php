@@ -38,7 +38,7 @@
                                             <label for="deviceimei" class="required">Device Imei<span
                                                     class="error">&nbsp;*</span></label>
                                             <input type="text" class="form-control" name="device_imei" id="device_imei"
-                                                placeholder="Enter the IMEI Number" value="{{ $vehicle->device_imei }}">
+                                                placeholder="Enter the IMEI Number" value="{{ $vehicle->device_imei }}" >
                                             <div class="div2" id="div2"></div>
                                             <span class="error_msg text-danger"></span>
                                         </fieldset>
@@ -75,7 +75,6 @@
                                         <button type="button" class="btn btn-primary btn-min-width"
                                             id="closeform">Reset</button>
                                     </div>
-
                             </form>
 
                         </div>

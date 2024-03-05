@@ -26,25 +26,25 @@ class ParkingReportController extends Controller
 
     public function getData(Request $request)
     {
-        $fromdate = date('Y-m-d H:i:s', strtotime($request->input('fromdate')));
-        $todate = date('Y-m-d H:i:s', strtotime($request->input('todate')));
-        $address =  $request->input('active');
+        $fromdate = date('Y-m-d H:i:s', strtotime($request->post('fromdate')));
+        $todate = date('Y-m-d H:i:s', strtotime($request->post('todate')));
+        $address =  $request->post('active');
         $totalFilteredRecord = $totalDataRecord = $draw_val = "";
         $columns_list = array(
             0 => 'id'
         );
-        $start = $request->input('start') + 1;
+        $start = $request->post('start') + 1;
 
         $totalDataRecord = ParkingReport::count();
 
         $totalFilteredRecord = $totalDataRecord;
 
-        $limit_val = $request->input('length');
-        $start_val = $request->input('start');
-        $order_val = $columns_list[$request->input('order.0.column')];
-        $dir_val = $request->input('order.0.dir');
+        $limit_val = $request->post('length');
+        $start_val = $request->post('start');
+        $order_val = $columns_list[$request->post('order.0.column')];
+        $dir_val = $request->post('order.0.dir');
 
-        if (empty($request->input('search.value'))) {
+        if (empty($request->post('search.value'))) {
             $post_data = DB::table('parking_reports AS p')
                 ->offset($start_val)
                 ->whereBetween('p.start_datetime', [$fromdate, $todate])
@@ -56,7 +56,7 @@ class ParkingReportController extends Controller
                 ->join('vehicles AS v', 'v.id', '=', 'p.vehicle_id')
                 ->get();
         } else {
-            $search_text = $request->input('search.value');
+            $search_text = $request->post('search.value');
 
             $post_data =  ParkingReport::where('id', 'LIKE', "%{$search_text}%")
                 ->orWhere('device_imei', 'LIKE', "%{$search_text}%")
@@ -76,7 +76,7 @@ class ParkingReportController extends Controller
         }
 
         if (!empty($post_data)) {
-            $draw_val = $request->input('draw');
+            $draw_val = $request->post('draw');
             $get_json_data = array(
                 "draw"            => intval($draw_val),
                 "recordsTotal"    => intval($totalDataRecord),
@@ -103,7 +103,7 @@ class ParkingReportController extends Controller
                 );
             }
             if (!empty($array_data)) {
-                $draw_val = $request->input('draw');
+                $draw_val = $request->post('draw');
                 $get_json_data = array(
                     "draw"            => intval($draw_val),
                     "recordsTotal"    => intval($totalDataRecord),

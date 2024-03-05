@@ -236,7 +236,7 @@
                     // ajax: "{{ route('parkingreport.getData') }}",
                     ajax: {
                         url: "{{ route('parkingreport.getData') }}",
-                        type: "GET",
+                        type: "POST",
                         data: {
                             _token: "{{ csrf_token() }}",
                             fromdate: fromdate,

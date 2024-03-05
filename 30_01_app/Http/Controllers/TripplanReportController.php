@@ -222,10 +222,10 @@ class TripplanReportController extends Controller
     public function complete_report_getData(Request $request)
     {
         $data = ($request->all());
-        $fromdate = date('Y-m-d H:i:s', strtotime($request->input('fromdate')));
-        $todate = date('Y-m-d H:i:s', strtotime($request->input('todate')));
+        $fromdate = date('Y-m-d H:i:s', strtotime($request->post('fromdate')));
+        $todate = date('Y-m-d H:i:s', strtotime($request->post('todate')));
         // dd($todate);
-        // $trip_status = $request->input('trip_status');
+        // $trip_status = $request->post('trip_status');
 
         $totalFilteredRecord = $totalDataRecord = $draw_val = "";
         $columns_list = array(
@@ -251,13 +251,13 @@ class TripplanReportController extends Controller
             )
             ->count();
 
-        $limit_val = $request->input('length');
-        $start_val = $request->input('start');
-        $order_val = $columns_list[$request->input('order.0.column')];
-        // 'desc' = $request->input('order.0.dir');
-        $start = $request->input('start') + 1;
+        $limit_val = $request->post('length');
+        $start_val = $request->post('start');
+        $order_val = $columns_list[$request->post('order.0.column')];
+        // 'desc' = $request->post('order.0.dir');
+        $start = $request->post('start') + 1;
 
-        if (empty($request->input('search.value'))) {
+        if (empty($request->post('search.value'))) {
 
             $post_data = TripplanReport::whereBetween('trip_date', [$fromdate, $todate])
                 ->where('status', 3)
@@ -280,7 +280,7 @@ class TripplanReportController extends Controller
                 ->orderBy($order_val, 'desc')
                 ->get();
         } else {
-            $search_text = $request->input('search.value');
+            $search_text = $request->post('search.value');
 
             $post_data =  TripplanReport::where('trip_id', 'LIKE', "%{$search_text}%")
                 ->orWhere('device_imei', 'LIKE', "%{$search_text}%")
@@ -338,7 +338,7 @@ class TripplanReportController extends Controller
             );
         }
         if (!empty($array_data)) {
-            $draw_val = $request->input('draw');
+            $draw_val = $request->post('draw');
             $get_json_data = array(
                 "draw"            => intval($draw_val),
                 "recordsTotal"    => intval($totalDataRecord),
@@ -348,7 +348,7 @@ class TripplanReportController extends Controller
 
             echo json_encode($get_json_data);
         } else {
-            $draw_val = $request->input('draw');
+            $draw_val = $request->post('draw');
             $get_json_data = array(
                 "draw"            => "intval($draw_val)",
                 "recordsTotal"    => 0,

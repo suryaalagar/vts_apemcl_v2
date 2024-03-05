@@ -27,9 +27,9 @@ class ParkingReportController extends Controller
 
     public function getData(Request $request)
     {
-        $fromdate = date('Y-m-d H:i:s', strtotime($request->input('fromdate')));
-        $todate = date('Y-m-d H:i:s', strtotime($request->input('todate')));
-        $address =  $request->input('active');
+        $fromdate = date('Y-m-d H:i:s', strtotime($request->post('fromdate')));
+        $todate = date('Y-m-d H:i:s', strtotime($request->post('todate')));
+        $address =  $request->post('active');
         $totalFilteredRecord = $totalDataRecord = $draw_val = "";
         $columns_list = array(
             0 => 'parking_reports.id'
@@ -104,7 +104,7 @@ class ParkingReportController extends Controller
                 );
             }
             if (!empty($array_data)) {
-                $draw_val = $request->input('draw');
+                $draw_val = $request->post('draw');
                 $get_json_data = array(
                     "draw"            => intval($draw_val),
                     "recordsTotal"    => intval($totalDataRecord),

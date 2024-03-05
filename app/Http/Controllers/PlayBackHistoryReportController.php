@@ -23,9 +23,9 @@ class PlayBackHistoryReportController extends Controller
 
     public function get_history(Request $request)
     {
-        $vehicle = date($request->input('vehicle'));
-        $fromdate = date('Y-m-d H:i:s', strtotime($request->input('from_date')));
-        $todate = date('Y-m-d H:i:s', strtotime($request->input('to_date')));
+        $vehicle = date($request->post('vehicle'));
+        $fromdate = date('Y-m-d H:i:s', strtotime($request->post('from_date')));
+        $todate = date('Y-m-d H:i:s', strtotime($request->post('to_date')));
 
         $query = PlayBackHistoryReport::whereBetween('play_back_histories.device_datetime', [$fromdate, $todate])
             ->join('vehicles AS v', 'v.device_imei', '=', 'play_back_histories.device_imei')

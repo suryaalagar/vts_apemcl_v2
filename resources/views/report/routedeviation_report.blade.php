@@ -197,7 +197,7 @@
                     destroy: true,
                     ajax: {
                         url: "{{ route('routedeviationreport.getData') }}",
-                        type: "GET",
+                        type: "POST",
                         data: {
                             _token: "{{ csrf_token() }}",
                             fromdate: fromdate,

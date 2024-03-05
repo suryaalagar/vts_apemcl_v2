@@ -247,9 +247,10 @@
             $.ajax({
                 url: "{{ route('playback.get_history') }}",
                 cache: false,
-                type: 'GET',
+                type: 'post',
                 dataType: "json",
                 data: {
+                    _token: "{{ csrf_token() }}",
                     'vehicle': vehicle,
                     'from_date': from_date,
                     'to_date': to_date,
