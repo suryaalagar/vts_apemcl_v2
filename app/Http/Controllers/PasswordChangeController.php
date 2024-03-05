@@ -56,7 +56,7 @@ class PasswordChangeController extends Controller
     {
         try {
             DB::beginTransaction();
-            $new_password = $this->generateRandomString(8);
+            $new_password = $this->generateRandomString(11);
             // dd($new_password);
             // $new_password = $request->input('new_password');
             $whatsapp_no = $request->input('whatsapp_no');
@@ -94,7 +94,7 @@ class PasswordChangeController extends Controller
 
     function generateRandomString($length = 10)
     {
-        $characters = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+        $characters = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*()_+{}:"|<>?';
         $randomString = '';
 
         for ($i = 0; $i < $length; $i++) {
