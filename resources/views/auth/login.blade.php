@@ -6,17 +6,10 @@
             .form-control-position {
                 top: 15px !important;
             }
-
-            ,
-            #backgroundImage {
-                background-image: url('/storage/images/backgrounds/Coworking.JPG');
-                width: 100vh;
-                height: 100vh;
-            }
         </style>
     @endpush
 
-    <body id="backgroundImage">
+    <body class="page_bg" style="background: linear-gradient(rgba(0, 0, 0, .8), rgba(0, 0, 0, .8)), url('{{ asset('img/truck.jpg') }}'); height: 100%; background-position: center; background-repeat: no-repeat; background-size: cover;">
         <section class="row flexbox-container">
             <div class="col-12 d-flex align-items-center justify-content-center">
                 <div class="col-lg-4 col-md-8 col-10 box-shadow-2 p-0">
@@ -114,7 +107,6 @@
                         $(".captcha span").html(data.captcha);
                     }
                 });
-
             });
         });
     </script>
