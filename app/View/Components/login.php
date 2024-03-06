@@ -23,7 +23,7 @@
     <link rel="shortcut icon" type="image/x-icon" href="<?= base_url(); ?>app-assets/images/ico/favicon.png">
     <!-- <link href="https://fonts.googleapis.com/css?family=Montserrat:300,300i,400,400i,500,500i%7COpen+Sans:300,300i,400,400i,600,600i,700,700i" rel="stylesheet"> -->
     <link rel="stylesheet" type="text/css" href="<?= base_url(); ?>assets/css/style.css">
-
+    <link rel="stylesheet" type="text/css" href="{{asset('assets/css/css.css')}}">
     <!-- BEGIN: Vendor CSS-->
     <link rel="stylesheet" type="text/css" href="<?= base_url(); ?>app-assets/vendors/css/vendors.min.css">
     <link rel="stylesheet" type="text/css" href="<?= base_url(); ?>app-assets/vendors/css/forms/icheck/icheck.css">
