@@ -27,9 +27,6 @@ class DashboardController extends Controller
         $planned_trips = $statusCounts[1] ?? 0;
         $process_trips = $statusCounts[2] ?? 0;
         $completed_trips = $statusCounts[3] ?? 0;
-        $user = auth()->user();
-        $current_time = date('Y-m-d H:i:s');
-        User::where('id', $user->id)->update(['last_login_time' => $current_time]);
         return view('dashboard.index', compact('planned_trips', 'process_trips', 'completed_trips',));
     }
 

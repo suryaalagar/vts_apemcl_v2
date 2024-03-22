@@ -6,7 +6,7 @@
         <ul class="nav navbar-nav float-right">
             <li>
                 <div style="margin-top : 10px;">
-                    <button type="button" class="btn btn-primary">{{ Auth::user()->last_login_time }}</button>
+                    <button type="button" class="btn btn-primary">{{ Session::get('previous_last_login_time') }}</button>
                 </div>
             </li>
             <li class="dropdown dropdown-user nav-item"><a class="dropdown-toggle nav-link dropdown-user-link"

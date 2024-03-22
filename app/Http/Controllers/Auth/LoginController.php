@@ -4,8 +4,10 @@ namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
 use App\Providers\RouteServiceProvider;
+use Carbon\Carbon;
 use Illuminate\Foundation\Auth\AuthenticatesUsers;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Http\Request;
 
 class LoginController extends Controller
 {
@@ -49,9 +51,16 @@ class LoginController extends Controller
         return response()->json(['captcha' => captcha_img('flat')]);
     }
 
-    protected function authenticated()
+    protected function authenticated(Request $request, $user)
     {
-        // Auth::logoutOtherDevices(request('password'));
+        $currentTimeUTC = Carbon::now();
+
+        // Convert to Indian Standard Time (IST)
+        $currentTimeIST = $currentTimeUTC->timezone('Asia/Kolkata');
+        $request->session()->put('previous_last_login_time', $user->last_login_time);
+        // Update last login time
+        $user->last_login_time = $currentTimeIST;
+        $user->save();
         Auth::logoutOtherDevices(request('password'));
     }
 }

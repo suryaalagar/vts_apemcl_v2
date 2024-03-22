@@ -18,7 +18,6 @@ class SecurityHeadersMiddleware
         $response->header('X-XSS-Protection', '1; mode=block');
         $response->header('X-Content-Type-Options', 'nosniff');
         $response->header('Referrer-Policy', 'strict-origin-when-cross-origin');
-        
 
         return $response;
     }
