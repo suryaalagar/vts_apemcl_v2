@@ -13,11 +13,12 @@ class SecurityHeadersMiddleware
     {
         // Add security headers
         $response = $next($request);
-        $response->header('Content-Security-Policy', 'your-content-security-policy');
+        $response->header('Content-Security-Policy', 'self');
         $response->header('X-Frame-Options', 'DENY');
         $response->header('X-XSS-Protection', '1; mode=block');
         $response->header('X-Content-Type-Options', 'nosniff');
         $response->header('Referrer-Policy', 'strict-origin-when-cross-origin');
+        $response->header('Strict-Transport-Security', 'max-age=63072000; includeSubdomains');
 
         return $response;
     }
